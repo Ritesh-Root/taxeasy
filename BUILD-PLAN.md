@@ -4,6 +4,17 @@
 **Source of truth for the product:** `~/Downloads/TaxEasy-FINAL/` (tie-breaker: `09-RECONCILIATION`).
 **This repo:** the production build. Engine-first, platform-agnostic until we deploy.
 
+## 🏆 Competing in: Build with Gemini XPRIZE (Devpost) — deadline **18 Aug 2026** (~52 days)
+- **Category:** Small Business Services.
+- **Hard requirement:** business operated by AI agents + uses ≥1 Google Cloud product.
+- **Stack decision (locked):** **Google-native** — **Gemini** (Flash 90% / Pro 10%) as the AI brain + vision,
+  **Firebase** (Firestore, Cloud Functions, Auth, Hosting) backend, on the **$300 Google credit**.
+  AWS $500 credit is not used for the prize. Tax engine stays model-agnostic (the moat).
+- **What's scored:** Business Viability (real revenue in 90 days), AI-Native Operations (AI live in prod,
+  executes key decisions), Category Impact. → We log every AI call + agent decision as evidence from day 1.
+- **Submission needs:** GitHub repo, 3-min video, 500–1000w narrative (AI vs human), revenue evidence,
+  expense disclosure, agent execution logs, customer evidence. Collect screenshots/logs as we build.
+
 ---
 
 ## 0. What's already true (don't re-litigate)
@@ -17,27 +28,31 @@ Locked by your two converging plan reviews:
 ## 1. Status
 - ✅ **Production tax engine (TypeScript), FY2025-26** — `src/engine/`. Versioned ruleset, income tax
   (new/old + §87A), presumptive 44ADA/44AD with whole-word scheme detection, GST, ITC §17(5), advance tax.
-- ✅ **17 trust-critical unit tests pass** (`node --test`), incl. the TAX-04 §87A-on-net fix.
-- ⏳ Everything below.
+- ✅ **Provider-agnostic AI layer** — `src/ai/` (Gemini client w/ tier routing + backoff; mock for tests).
+- ✅ **Intent router + static answers** — `src/agent/`. Deterministic facts + tax math route around the AI
+  (zero cost / zero 429); only real conversation hits Gemini. AI never produces a number.
+- ✅ **Execution logging** — `src/observability/log.ts` (JSON evidence trail for judging).
+- ✅ **21 tests pass** (`node --test`), incl. the TAX-04 §87A-on-net fix.
+- ⏳ Telegram loop (runnable) → WhatsApp swap → onboarding → bill vision → month-end bill → payments.
 
-## 2. The decision still open (decide together)
-**Where do we deploy / what's the backend platform?** Engine is platform-independent so this blocks nothing
-yet. Options in `§5`. Decide before Phase 1 ships.
+## 2. Platform — DECIDED: Google-native (see hackathon banner above)
+Gemini + Firebase. Engine + AI wrapper were built model-agnostic, so this was a clean swap.
 
 ---
 
 ## 3. Model + effort — the product's runtime AI
 Hard-coded engine answers anything deterministic (deadlines, slabs, the tax math). Only genuine NL hits Claude.
 
-| Runtime job | Model | Effort | Notes |
-|---|---|---|---|
-| Categorize expense / read bill | Haiku 4.5 | none–low | High volume |
-| Explain a concept, simple Q&A | Haiku 4.5 | low | Static answers cached → 0 AI calls |
-| Segment classification (onboarding) | Sonnet 4.6 | medium | Wrong segment = wrong scheme |
-| Reconciliation / GSTR-2B netting | Sonnet 4.6 | high | Multi-step, money-sensitive |
-| Foreign income / edge cases | Sonnet → Opus | high | Rare, high blast radius |
+| Runtime job | Model (tier) | Notes |
+|---|---|---|
+| Categorize expense / read bill (vision) | Gemini Flash (`fast`) | High volume |
+| Explain a concept, simple Q&A | Gemini Flash (`fast`) | Static facts answered with 0 AI calls |
+| Segment classification (onboarding) | Gemini Pro (`smart`) | Wrong segment = wrong scheme |
+| Reconciliation / GSTR-2B netting | Gemini Pro (`smart`) | Multi-step, money-sensitive |
+| Foreign income / edge cases | Gemini Pro (`smart`) | Rare, high blast radius |
 
-Model IDs: `claude-haiku-4-5`, `claude-sonnet-4-6`, `claude-opus-4-8`. No GPT fallback — backoff + queue.
+Verify model IDs in Google AI Studio (`gemini-2.5-flash` / `gemini-2.5-pro` as of build). Backoff + queue,
+no cross-provider fallback. The hard-coded engine — not any model — produces every tax number.
 
 ## 4. Model + effort — how Claude Code builds each task
 | Build task | Model | Effort |
