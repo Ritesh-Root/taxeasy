@@ -28,7 +28,8 @@ export function incomeTax(
   regime: Regime = "new",
   rules: TaxRuleSet = FY_2025_26,
 ): IncomeTaxResult {
-  const taxable = Math.max(0, Math.round(taxableIncome));
+  // Never emit NaN/Infinity from a tax engine — coerce bad input to 0.
+  const taxable = Number.isFinite(taxableIncome) ? Math.max(0, Math.round(taxableIncome)) : 0;
   const cfg = regime === "new" ? rules.newRegime : rules.oldRegime;
 
   const taxBeforeRebate = slabTax(taxable, cfg.slabs);

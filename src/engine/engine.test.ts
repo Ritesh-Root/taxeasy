@@ -44,6 +44,14 @@ test("old regime: ₹5L → ₹0 via §87A", () => {
   assert.equal(incomeTax(500_000, "old").total, 0);
 });
 
+test("engine never emits NaN/Infinity from bad input", () => {
+  assert.equal(incomeTax(NaN, "new").total, 0);
+  assert.equal(incomeTax(Infinity, "new").taxableIncome, 0);
+  const e = estimateTax({ profession: "dev", grossReceipts: NaN, incomeType: "PROFESSION" });
+  assert.equal(e.presumptive.presumptiveIncome, 0);
+  assert.equal(e.tax?.total, 0);
+});
+
 test("TAX-04: ₹18L gross 44ADA professional → ₹9L net → ₹0 tax", () => {
   const p = presumptiveIncome(1_800_000, "44ADA");
   assert.equal(p.presumptiveIncome, 900_000);

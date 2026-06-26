@@ -42,7 +42,8 @@ Severity: 🔴 critical (wrong tax / legal/GST exposure) · 🟠 high · 🟡 me
 | D1 | **OpenWA WhatsApp ban** mid-judging (unofficial transport). | 🔴 | Separate throwaway number; Telegram fallback; swap to official BSP (one file). Tracked in `SECURITY.md`. |
 | D2 | **No persistence yet** — state is in-memory, lost on restart. | 🟠 | ✅ **Addressed** — file-based adapter (`FileUserStore`/`FileEventStore`) persists across restarts (tested); WhatsApp entry uses it by default. Firestore = same ports, drop in when GCP creds land. |
 | D3 | **Tax-rule staleness** — Budget changes yearly. | 🟠 | Rules are versioned per FY; add a 1-April re-verify checklist. |
-| D4 | **DPDP consent not yet enforced server-side.** | 🟠 | Wire the consent strip-before-AI in the agent (design done; `SECURITY.md` gate). |
+| D4 | **DPDP consent not yet enforced server-side.** | 🟠 | ✅ **Fixed** — `src/agent/consent.ts` strips non-consented categories before any AI call (tested). |
+| D8 | **FileUserStore concurrent-write data loss** (code review) — shared-map read-modify-write clobbered other users. | 🔴 | ✅ **Fixed** — one file per user (atomic rename), eliminating the cross-user race. |
 | D5 | **Gemini quota / 429** on a new GCP project. | 🟡 | Backoff + routing in place; request quota on day 1 before load. |
 | D6 | **Scope gaps:** foreign income (FIRC, USD→INR), salaried+business mix, full GST netting, depreciation. | 🟡 | Roadmap P2–P4; surface "not yet supported" rather than guess. |
 | D7 | **Razorpay AutoPay success ~30–50%.** | 🟡 | Intelligent retry + WhatsApp dunning (planned). |

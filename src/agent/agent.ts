@@ -14,6 +14,7 @@ import { route, SYSTEM_PROMPT } from "./router.ts";
 import type { AgentReply, UserProfile } from "./router.ts";
 import { defaultModel, updateModel, adaptSystemPrompt, applySegment } from "./user-model.ts";
 import { welcome, handleOnboarding } from "./onboarding.ts";
+import { consentedContext } from "./consent.ts";
 
 export interface AgentDeps {
   llm: LlmClient;
@@ -42,12 +43,13 @@ export class TaxEasyAgent {
       return this.#onboard(user, message);
     }
 
-    // Onboarded → learn, adapt, route in the user's language.
+    // Onboarded → learn, adapt, route in the user's language. The AI context is
+    // built from consented data only (DPDP enforcement — see consent.ts).
     const model = updateModel(user.model, message);
     const profile: UserProfile = { userId, ...user.profile };
     const reply = await route(message, profile, {
       llm: this.#deps.llm,
-      systemPrompt: adaptSystemPrompt(SYSTEM_PROMPT, model),
+      systemPrompt: adaptSystemPrompt(SYSTEM_PROMPT, model) + consentedContext(user.profile),
       lang: model.language,
     });
 

@@ -19,8 +19,9 @@ Derived from **ritesh-security-check** (github.com/Ritesh-Root/ritesh-security-c
 - [ ] All tax/financial writes go through the backend (engine + validation), not direct client writes.
 
 ## 🔴 DPDP / consent (product-specific)
-- [ ] Consent enforced **server-side**: if a data category toggle is OFF, the API strips those fields
-      **before** any Gemini call (not just hidden in UI). (See `UserProfile.consent`.)
+- [x] Consent enforced **server-side**: non-consented categories are stripped **before** any Gemini call,
+      not just hidden in UI. Implemented in `src/agent/consent.ts` (`consentedContext` / `stripUnconsented`),
+      wired in `agent.ts`; tested (turnover withheld when `income` consent is off).
 - [ ] Audit log of every datum sent to the AI (we have the event log — keep it complete).
 - [ ] Published privacy notice + grievance contact before launch.
 - [ ] Encryption at rest (Firestore default) + India residency (`asia-south1`).

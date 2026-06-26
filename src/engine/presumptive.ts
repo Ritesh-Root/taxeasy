@@ -47,7 +47,7 @@ export function presumptiveIncome(
   rules: TaxRuleSet = FY_2025_26,
 ): PresumptiveResult {
   const p = rules.presumptive;
-  const gross = Math.max(0, Math.round(grossReceipts));
+  const gross = Number.isFinite(grossReceipts) ? Math.max(0, Math.round(grossReceipts)) : 0;
 
   let rate: number;
   let limit: number;
