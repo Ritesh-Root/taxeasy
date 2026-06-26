@@ -131,13 +131,13 @@ const CATALOG: Catalog = {
   // ---- advisory ----
   "advisory.gst_required": {
     en: "Turnover ₹{turnover} exceeds the ₹{threshold} {kind} threshold — registration required. I can walk you through it; small traders can opt for the composition scheme (~1% of turnover, simpler returns).",
-    hi: "टर्नओवर ₹{turnover} ₹{threshold} {kind} सीमा से ऊपर है — रजिस्ट्रेशन ज़रूरी है। मैं मदद कर सकता हूँ; छोटे व्यापारी कंपोज़िशन स्कीम (~1% टर्नओवर, आसान रिटर्न) चुन सकते हैं।",
-    hinglish: "Turnover ₹{turnover} ₹{threshold} {kind} limit se upar hai — registration zaroori hai. Main guide kar sakta hoon; chhote traders composition scheme (~1% turnover, aasaan returns) le sakte hain.",
+    hi: "टर्नओवर ₹{turnover} है, जो ₹{threshold} की {kind} सीमा से ऊपर है — रजिस्ट्रेशन ज़रूरी है। मैं मदद कर सकता हूँ; छोटे व्यापारी कंपोज़िशन स्कीम (~1% टर्नओवर, आसान रिटर्न) चुन सकते हैं।",
+    hinglish: "Turnover ₹{turnover} hai, jo ₹{threshold} ki {kind} limit se upar hai — registration zaroori hai. Main guide kar sakta hoon; chhote traders composition scheme (~1% turnover, aasaan returns) le sakte hain.",
   },
   "advisory.gst_not_required": {
     en: "Turnover ₹{turnover} is below the ₹{threshold} {kind} threshold — registration optional. You can still register voluntarily if your buyers want input credit.",
-    hi: "टर्नओवर ₹{turnover} ₹{threshold} {kind} सीमा से नीचे है — रजिस्ट्रेशन ज़रूरी नहीं। अगर खरीदार इनपुट क्रेडिट चाहें तो आप स्वेच्छा से रजिस्टर कर सकते हैं।",
-    hinglish: "Turnover ₹{turnover} ₹{threshold} {kind} limit se neeche hai — registration optional hai. Agar buyers input credit chahein to aap voluntarily register kar sakte ho.",
+    hi: "टर्नओवर ₹{turnover} है, जो ₹{threshold} की {kind} सीमा से नीचे है — रजिस्ट्रेशन ज़रूरी नहीं। अगर खरीदार इनपुट क्रेडिट चाहें तो आप स्वेच्छा से रजिस्टर कर सकते हैं।",
+    hinglish: "Turnover ₹{turnover} hai, jo ₹{threshold} ki {kind} limit se neeche hai — registration optional hai. Agar buyers input credit chahein to aap voluntarily register kar sakte ho.",
   },
   "advisory.presumptive_yes": {
     en: "Yes — at ₹{gross} you're within the {scheme} cap (₹{cap}), so you can use presumptive taxation.",
@@ -167,6 +167,32 @@ const CATALOG: Catalog = {
   },
   "kind.goods": { en: "goods", hi: "सामान", hinglish: "goods" },
   "kind.services": { en: "services", hi: "सेवाओं", hinglish: "services" },
+  // ---- advisory depth (Phase B) ----
+  "advisory.notice_penalty": {
+    en: "Relax — this is fixable. If you should be registered/filed and aren't: do it now. There's a late fee (₹50/day, capped ₹5,000) + interest, and a penalty can apply — but acting now keeps it small. I'll remind you before every deadline so you never miss one.",
+    hi: "घबराइए नहीं — यह ठीक हो सकता है। अगर रजिस्ट्रेशन/फाइलिंग बाक़ी है तो अभी कर लें। लेट फीस (₹50/दिन, अधिकतम ₹5,000) + ब्याज लगता है, और जुर्माना भी हो सकता है — पर अभी कदम उठाने से यह छोटा रहता है। मैं हर डेडलाइन से पहले याद दिला दूँगा ताकि कुछ छूटे नहीं।",
+    hinglish: "Ghabraao mat — ye theek ho sakta hai. Agar registration/filing baaki hai to abhi kar lo. Late fee (₹50/din, max ₹5,000) + interest lagta hai, aur penalty bhi ho sakti hai — par abhi karne se chhota rehta hai. Main har deadline se pehle yaad dila dunga taaki kuch na chhute.",
+  },
+  "advisory.value_zero": {
+    en: "Good news — your income tax is ₹0! TaxEasy is still worth it: I track your bills and flag overcharges, remind you before every deadline (so no late fees or notices), and keep your records ready. There's also a FREE plan for low earners — you don't need to pay ₹200 to get reminders + bill alerts.",
+    hi: "अच्छी खबर — आपका इनकम टैक्स ₹0 है! फिर भी TaxEasy काम का है: मैं आपके बिल ट्रैक करता हूँ और ज़्यादा चार्ज पकड़ता हूँ, हर डेडलाइन से पहले याद दिलाता हूँ (कोई लेट फीस या नोटिस नहीं), और रिकॉर्ड तैयार रखता हूँ। कम आमदनी वालों के लिए एक मुफ़्त प्लान भी है — रिमाइंडर और बिल अलर्ट के लिए ₹200 देने की ज़रूरत नहीं।",
+    hinglish: "Achhi khabar — aapka income tax ₹0 hai! Phir bhi TaxEasy kaam ka hai: main bills track karta hoon aur over-charge pakadta hoon, har deadline se pehle yaad dilata hoon (koi late fee ya notice nahi), aur records ready rakhta hoon. Kam income walon ke liye ek FREE plan bhi hai — reminders + bill alerts ke liye ₹200 dene ki zaroorat nahi.",
+  },
+  "advisory.value": {
+    en: "Fair question. Beyond the tax number, TaxEasy saves you money: it catches wrong/overcharged bills, captures input-tax credit, reminds you before deadlines (no late fees or notices), and prepares your month-end tax bill — usually worth far more than ₹200/month.",
+    hi: "सही सवाल। टैक्स के अलावा भी TaxEasy पैसे बचाता है: ग़लत/ज़्यादा बिल पकड़ता है, इनपुट टैक्स क्रेडिट लेता है, डेडलाइन से पहले याद दिलाता है (कोई लेट फीस/नोटिस नहीं), और महीने के अंत का टैक्स बिल तैयार करता है — आम तौर पर ₹200/माह से कहीं ज़्यादा फ़ायदा।",
+    hinglish: "Sahi sawaal. Tax ke alawa bhi TaxEasy paisa bachata hai: galat/zyada bills pakadta hai, input tax credit leta hai, deadline se pehle yaad dilata hai (koi late fee/notice nahi), aur month-end tax bill banata hai — aam taur par ₹200/mahina se kahin zyada fayda.",
+  },
+  "advisory.reassurance": {
+    en: "Don't worry — I'll handle the hard parts. You just send me a photo or a number when I ask, and I'll do the calculations, the reminders, and the paperwork prep. We'll go one small step at a time. 🙂",
+    hi: "चिंता मत कीजिए — मुश्किल काम मैं सँभाल लूँगा। आप बस जब मैं कहूँ तब फ़ोटो या नंबर भेज दीजिए, बाक़ी गणना, रिमाइंडर और कागज़ी तैयारी मैं कर दूँगा। हम एक-एक कदम करके चलेंगे। 🙂",
+    hinglish: "Chinta mat karo — mushkil kaam main sambhal lunga. Aap bas jab main kahun tab photo ya number bhej dena, baaki calculation, reminders aur paperwork main kar dunga. Hum ek-ek step karke chalenge. 🙂",
+  },
+  // ---- proactive date-driven triggers ----
+  "trigger.advance_tax": { en: "🗓️ Advance tax instalment is due {date} — I'll help you pay on time to avoid §234 interest.", hi: "🗓️ एडवांस टैक्स की क़िस्त {date} को देय है — §234 ब्याज से बचने के लिए मैं समय पर भरवा दूँगा।", hinglish: "🗓️ Advance tax instalment {date} ko due hai — §234 interest se bachne ke liye time par bharwa dunga." },
+  "trigger.gstr3b": { en: "🗓️ GSTR-3B is due {date}. Want me to prep the summary?", hi: "🗓️ GSTR-3B {date} को देय है। समरी तैयार कर दूँ?", hinglish: "🗓️ GSTR-3B {date} ko due hai. Summary bana dun?" },
+  "trigger.itr": { en: "🗓️ Your ITR (business/presumptive) is due {date}. I'll get your numbers ready.", hi: "🗓️ आपका ITR (व्यापार/प्रिज़म्प्टिव) {date} को देय है। मैं आपके आँकड़े तैयार कर दूँगा।", hinglish: "🗓️ Aapka ITR (business/presumptive) {date} ko due hai. Main numbers ready kar dunga." },
+  "trigger.lut": { en: "🗓️ Renew your LUT before {date}, or exports attract 18% IGST.", hi: "🗓️ {date} से पहले अपना LUT रिन्यू करें, वरना निर्यात पर 18% IGST लगेगा।", hinglish: "🗓️ {date} se pehle apna LUT renew karo, warna export par 18% IGST lagega." },
 };
 
 /** Render a catalog key in the given language with {var} substitution. */

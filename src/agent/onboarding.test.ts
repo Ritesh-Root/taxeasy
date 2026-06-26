@@ -13,10 +13,13 @@ import { setLogSink } from "../observability/log.ts";
 
 setLogSink(() => {});
 
-test("parseAmount handles Indian formats", () => {
+test("parseAmount handles Indian formats incl. Hindi", () => {
   assert.equal(parseAmount("18,00,000"), 1_800_000);
   assert.equal(parseAmount("18 lakh"), 1_800_000);
   assert.equal(parseAmount("1.2 cr"), 12_000_000);
+  assert.equal(parseAmount("60 लाख"), 6_000_000); // Devanagari word
+  assert.equal(parseAmount("१८ लाख"), 1_800_000); // Devanagari digits + word
+  assert.equal(parseAmount("1.2 करोड़"), 12_000_000);
   assert.equal(parseAmount("nope"), null);
 });
 

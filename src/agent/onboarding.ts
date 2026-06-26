@@ -27,13 +27,17 @@ export const welcome = (lang: Lang = "en") => t("onboard.welcome", lang);
 /** Back-compat default (English) for callers that don't pass a language. */
 export const WELCOME = welcome("en");
 
-/** Parse Indian-style amounts: "18,00,000", "18 lakh", "1.2 cr". */
+/** Parse Indian-style amounts incl. Hindi: "18,00,000", "18 lakh", "१८ लाख", "1.2 करोड़". */
 export function parseAmount(text: string): number | null {
-  const t = text.toLowerCase().replace(/,/g, "");
+  // Normalise Devanagari digits (०-९) → ASCII, drop separators.
+  const t = text
+    .replace(/[०-९]/g, (d) => String("०१२३४५६७८९".indexOf(d)))
+    .toLowerCase()
+    .replace(/,/g, "");
   const num = parseFloat((t.match(/[\d.]+/) ?? [])[0] ?? "");
   if (!Number.isFinite(num)) return null;
-  if (/cr|crore/.test(t)) return Math.round(num * 10_000_000);
-  if (/lakh|lac|\bl\b/.test(t)) return Math.round(num * 100_000);
+  if (/cr|crore|करोड़|करोड/.test(t)) return Math.round(num * 10_000_000);
+  if (/lakh|lac|लाख|\bl\b/.test(t)) return Math.round(num * 100_000);
   return Math.round(num);
 }
 
