@@ -91,6 +91,19 @@ Google-for-Startups story is real without the full AWS build. Migrate queue/sche
 - **P3 — Mobile app (Dec → Feb):** cashflow, doc vault, GST views, granular data-sharing consent.
 - **P4 — Business modules (Mar → Jun):** multi-GSTIN, invoicing, depreciation/WDV, CA export.
 
+## 6a. Architecture guarantees (founder requirements — built in, tested)
+**Adaptive agentic system.** Each user has a persisted **UserModel** (`src/agent/user-model.ts`): language
+(en/hi/hinglish), verbosity, tech level, segment, learned facts — updated every message. `TaxEasyAgent`
+composes a per-user adapted system prompt, so one codebase serves a detailed-English doctor and a
+one-line-Hinglish gig worker differently, automatically. Adaptation grows richer as we add onboarding +
+behavioural signals.
+
+**Zero-data-loss mobility.** Hexagonal **ports** (`src/ports/`) — the agent depends only on
+`UserStore`/`EventStore`/`DocStore` interfaces, never a concrete cloud. Firestore/Postgres/S3 are swappable
+adapters. The **append-only event log is the source of truth**; all other state is a replayable projection.
+Migration = `exportLog` → `replayInto` a fresh store → verify (tested: export→replay→byte-identical history).
+No provider can lock in your data. AI provider is likewise swappable (`LlmClient`).
+
 ## 7. Never compromise
 1. The tax numbers are right (re-verify each 1 April after the Budget).
 2. The AI never does math — engine computes, Claude explains.

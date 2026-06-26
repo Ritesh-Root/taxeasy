@@ -39,9 +39,11 @@ export interface AgentReply {
 
 export interface RouterDeps {
   llm: LlmClient;
+  /** Per-user adapted system prompt (from the user model). Falls back to default. */
+  systemPrompt?: string;
 }
 
-const SYSTEM_PROMPT =
+export const SYSTEM_PROMPT =
   "You are TaxEasy, a financial assistant for Indian small-business owners on WhatsApp. " +
   "Be concise, use ₹, and match the user's language (English/Hindi/Hinglish). " +
   "You NEVER compute or state tax amounts yourself — those come only from the TaxEasy engine. " +
@@ -98,10 +100,10 @@ export async function route(
     return { text: ask, source: "static" };
   }
 
-  // 3) Conversational — Gemini (fast tier).
+  // 3) Conversational — Gemini (fast tier), with the per-user adapted prompt.
   const res = await deps.llm.generate({
     tier: "fast",
-    system: SYSTEM_PROMPT,
+    system: deps.systemPrompt ?? SYSTEM_PROMPT,
     messages: [{ role: "user", text }],
     temperature: 0.2,
   });
