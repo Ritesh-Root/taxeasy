@@ -204,6 +204,32 @@ const CATALOG: Catalog = {
     hi: "💡 GST-रजिस्टर्ड व्यापार के लिए आपका मुख्य मासिक टैक्स GST (आउटपुट − इनपुट) है, इनकम टैक्स नहीं — मैं गणना और फाइलिंग में मदद करूँगा।",
     hinglish: "💡 GST-registered business ke liye aapka main monthly tax GST (output − input) hai, income tax nahi — main compute aur file karne me madad karunga.",
   },
+  // ---- safety / legal guardrails ----
+  "safety.evasion": {
+    en: "I can't help hide income, fake bills, or evade tax — that's illegal and risks heavy penalties and prosecution. But I CAN help you pay less tax *legally*: presumptive schemes, eligible deductions, and claiming valid input credit. Want me to show those?",
+    hi: "मैं इनकम छुपाने, नकली बिल बनाने या टैक्स चोरी में मदद नहीं कर सकता — यह ग़ैरक़ानूनी है और भारी जुर्माना व मुक़दमे का ख़तरा है। पर मैं आपको *क़ानूनी* तरीक़े से टैक्स कम करने में मदद कर सकता हूँ: प्रिज़म्प्टिव स्कीम, पात्र छूट, और सही इनपुट क्रेडिट। दिखाऊँ?",
+    hinglish: "Main income chhupane, fake bill banane ya tax chori me madad nahi kar sakta — ye illegal hai aur bhaari penalty + case ka risk hai. Par main aapko *legally* tax kam karne me madad kar sakta hoon: presumptive scheme, eligible deductions, sahi input credit. Dikhaun?",
+  },
+  "safety.guarantee": {
+    en: "I can't guarantee outcomes like 'no notice' or a specific refund — honestly, no one can. What I can do is keep your numbers correct and remind you of every deadline, which is what actually lowers your risk.",
+    hi: "मैं 'नोटिस नहीं आएगा' या किसी ख़ास रिफंड जैसी गारंटी नहीं दे सकता — सच कहूँ तो कोई नहीं दे सकता। पर मैं आपके आँकड़े सही रखूँगा और हर डेडलाइन याद दिलाऊँगा — असल में यही जोखिम घटाता है।",
+    hinglish: "Main 'notice nahi aayega' ya kisi specific refund ki guarantee nahi de sakta — sach me koi nahi de sakta. Par main aapke numbers sahi rakhunga aur har deadline yaad dilaunga — yahi actually risk kam karta hai.",
+  },
+  "safety.represent": {
+    en: "I prepare your numbers and paperwork, but I can't file your return or represent you before the tax department, and I can't take legal responsibility — you (or your CA) authorize and file. I'll make that final step as easy as possible.",
+    hi: "मैं आपके आँकड़े और कागज़ात तैयार करता हूँ, पर मैं आपका रिटर्न फ़ाइल नहीं कर सकता, न ही टैक्स विभाग के सामने आपका प्रतिनिधित्व कर सकता हूँ, और न क़ानूनी ज़िम्मेदारी ले सकता हूँ — आप (या आपके CA) अनुमति देकर फ़ाइल करते हैं। वह आख़िरी कदम मैं आसान बना दूँगा।",
+    hinglish: "Main aapke numbers aur paperwork ready karta hoon, par main aapka return file nahi kar sakta, na tax department ke saamne aapko represent kar sakta hoon, aur na legal responsibility le sakta hoon — aap (ya aapke CA) authorize karke file karte ho. Wo last step main aasaan bana dunga.",
+  },
+  "safety.scope": {
+    en: "I focus only on tax, GST, and bills for your business — I can't advise on investments, legal disputes, or medical matters. For those, please consult the right professional.",
+    hi: "मैं सिर्फ़ आपके व्यापार के टैक्स, GST और बिल पर ध्यान देता हूँ — निवेश, क़ानूनी विवाद या चिकित्सा पर सलाह नहीं दे सकता। उनके लिए कृपया सही विशेषज्ञ से मिलें।",
+    hinglish: "Main sirf aapke business ke tax, GST aur bills par focus karta hoon — investment, legal dispute ya medical par advice nahi de sakta. Unke liye sahi professional se milein.",
+  },
+  "safety.injection": {
+    en: "I'm here only to help with your tax, GST, and bills — let's stick to that. What do you need help with?",
+    hi: "मैं सिर्फ़ आपके टैक्स, GST और बिल में मदद के लिए हूँ — उसी पर चलते हैं। किसमें मदद चाहिए?",
+    hinglish: "Main sirf aapke tax, GST aur bills me madad ke liye hoon — usi par chalte hain. Kis cheez me madad chahiye?",
+  },
 };
 
 /** Render a catalog key in the given language with {var} substitution. */
