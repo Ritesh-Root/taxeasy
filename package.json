@@ -1,0 +1,16 @@
+{
+  "name": "taxeasy",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TaxEasy — WhatsApp-first financial co-pilot for Indian business owners. Hard-coded tax engine; AI never computes the numbers.",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "node --test src/**/*.test.ts",
+    "test:engine": "node --test src/engine/engine.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "license": "UNLICENSED"
+}
