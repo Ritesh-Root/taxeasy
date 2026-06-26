@@ -38,5 +38,19 @@ Derived from **ritesh-security-check** (github.com/Ritesh-Root/ritesh-security-c
 - [ ] Webhook signature verification (Meta `X-Hub-Signature-256` / Telegram secret token).
 - [ ] Idempotency on inbound `message_id` (dedupe re-deliveries).
 
+## Hardening applied (from security code review)
+- [x] **Stored prompt injection** — user-supplied `profession` is sanitized (newlines/control chars stripped,
+      length-capped) and framed as quoted data before reaching the AI context (`src/agent/sanitize.ts`).
+- [x] **Webhook fails closed** — `OpenWaChannel` refuses to start without an HMAC secret unless
+      `allowInsecure` is explicitly set (dev only). HMAC compare is constant-time (`timingSafeEqual`).
+- [x] **Webhook body-size cap** (256 KB) — rejects oversized POSTs (memory-exhaustion DoS guard).
+- [x] **Gemini API key in header** (`x-goog-api-key`), not the URL query string (no key leakage via logs).
+- [x] **Per-user rate limit** (20 msg/min default) — AI-cost / spam / forged-flood guard (`rate-limit.ts`).
+- [x] **Message length cap** (4 KB) before any regex/AI work.
+- [x] **No financial PII in app logs** — the ₹ tax figure is no longer logged (boolean only).
+- [x] **Path traversal closed** — user-id sanitized + hashed for per-user file names.
+- [ ] **TODO (ops):** put the webhook behind TLS or bind to localhost (PII in transit); add a secrets scan
+      + `tsc --noEmit` type-check to CI; add an AI-classifier as a second layer behind the regex safety gate.
+
 ## Tool gate (run in order before launch)
 `gitleaks` → `semgrep --config auto` → `osv-scanner` → Firebase rules review → (staging) OWASP ZAP baseline.

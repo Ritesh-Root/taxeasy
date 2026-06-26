@@ -11,11 +11,14 @@
  */
 import type { Channel, InboundMessage } from "../ports/channel.ts";
 import type { TaxEasyAgent } from "../agent/agent.ts";
+import { RateLimiter } from "./rate-limit.ts";
 import { logEvent } from "../observability/log.ts";
 
 export interface ServeOptions {
   /** Cap on remembered message ids before the dedupe set resets. */
   dedupeMax?: number;
+  /** Max messages per user per minute (AI-cost / spam guard). Default 20. */
+  ratePerMinute?: number;
 }
 
 export async function serve(
@@ -25,6 +28,7 @@ export async function serve(
 ): Promise<void> {
   const seen = new Set<string>();
   const dedupeMax = opts.dedupeMax ?? 5_000;
+  const limiter = new RateLimiter(opts.ratePerMinute ?? 20, 60_000);
 
   await channel.start(async (msg: InboundMessage) => {
     if (msg.messageId) {
@@ -34,6 +38,12 @@ export async function serve(
       }
       seen.add(msg.messageId);
       if (seen.size > dedupeMax) seen.clear();
+    }
+
+    // Per-user rate limit — drop floods silently (don't amplify by replying).
+    if (!limiter.allow(msg.userId)) {
+      logEvent("message_in", { userId: msg.userId, channel: channel.name, throttled: true });
+      return;
     }
 
     try {

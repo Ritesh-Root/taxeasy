@@ -159,7 +159,8 @@ export async function route(
         userId: profile.userId,
         scheme: est.presumptive.scheme,
         applicable: est.presumptiveApplicable,
-        total: est.tax?.total ?? null,
+        // Don't log the actual ₹ tax figure (financial PII); a boolean is enough.
+        hasLiability: (est.tax?.total ?? 0) > 0,
       });
       // Over the presumptive cap → withhold the (falsely low) number; guide instead.
       if (!est.presumptiveApplicable || est.tax === null) {

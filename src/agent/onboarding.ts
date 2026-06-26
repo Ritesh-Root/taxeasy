@@ -11,6 +11,7 @@
 import type { OnboardingStep, UserProfileData, UserModelData } from "../ports/types.ts";
 import { detectScheme, estimateTax } from "../engine/index.ts";
 import { proactiveInsights } from "./advisory.ts";
+import { sanitizeText } from "./sanitize.ts";
 import { t } from "./i18n.ts";
 import type { Lang } from "./i18n.ts";
 
@@ -63,15 +64,18 @@ export function handleOnboarding(
 
   switch (step) {
     case "profession": {
-      if (!msg) {
+      // Sanitize: profession is free text that later reaches the AI context, so
+      // strip newlines/control chars and cap length (stored prompt-injection defense).
+      const profession = sanitizeText(msg, 60);
+      if (!profession) {
         return { reply: t("onboard.welcome", lang), profilePatch: {}, nextStep: "profession", complete: false };
       }
-      const scheme = detectScheme(msg);
+      const scheme = detectScheme(profession);
       const segment = scheme === "44ADA" ? "professional" : "trader";
       const incomeType = scheme === "44ADA" ? "PROFESSION" : "BUSINESS";
       return {
-        reply: t("onboard.profession_ack", lang, { work: msg, scheme }),
-        profilePatch: { profession: msg, incomeType },
+        reply: t("onboard.profession_ack", lang, { work: profession, scheme }),
+        profilePatch: { profession, incomeType },
         segment,
         nextStep: "turnover",
         complete: false,

@@ -42,7 +42,8 @@ export class GeminiClient implements LlmClient {
 
   async generate(req: LlmRequest): Promise<LlmResponse> {
     const model = this.#model(req.tier);
-    const url = `${this.#cfg.baseUrl}/models/${model}:generateContent?key=${this.#cfg.apiKey}`;
+    // Key goes in a header, NOT the URL query string (URLs leak via logs/proxies).
+    const url = `${this.#cfg.baseUrl}/models/${model}:generateContent`;
     const body = {
       systemInstruction: { parts: [{ text: req.system }] },
       contents: req.messages.map((m) => ({ role: m.role, parts: [{ text: m.text }] })),
@@ -57,7 +58,7 @@ export class GeminiClient implements LlmClient {
       try {
         const res = await fetch(url, {
           method: "POST",
-          headers: { "content-type": "application/json" },
+          headers: { "content-type": "application/json", "x-goog-api-key": this.#cfg.apiKey },
           body: JSON.stringify(body),
         });
 

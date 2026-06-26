@@ -22,6 +22,9 @@ export interface AgentDeps {
   events: EventStore;
 }
 
+/** Hard cap on inbound message length (cost/DoS guard, review #6). */
+const MAX_MESSAGE_LEN = 4000;
+
 export class TaxEasyAgent {
   #deps: AgentDeps;
   constructor(deps: AgentDeps) {
@@ -35,6 +38,7 @@ export class TaxEasyAgent {
   }
 
   async handle(userId: string, message: string): Promise<AgentReply> {
+    message = message.slice(0, MAX_MESSAGE_LEN); // cap before any regex/AI work (cost/DoS guard)
     const user = await this.#loadOrCreate(userId);
     await this.#deps.events.append({ userId, type: "message_in", data: { chars: message.length } });
 

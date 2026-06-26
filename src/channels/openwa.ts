@@ -22,9 +22,13 @@ export interface OpenWaConfig {
   session?: string;
   webhookPort?: number;
   webhookPath?: string;
-  /** HMAC-SHA256 secret to verify inbound webhooks (strongly recommended). */
+  /** HMAC-SHA256 secret to verify inbound webhooks (REQUIRED unless allowInsecure). */
   webhookSecret?: string;
   webhookSignatureHeader?: string;
+  /** Escape hatch for LOCAL DEV ONLY — run without webhook auth. Never in prod. */
+  allowInsecure?: boolean;
+  /** Max inbound webhook body size in bytes (DoS guard). Default 256 KB. */
+  maxBodyBytes?: number;
 }
 
 interface ResolvedConfig extends Required<Omit<OpenWaConfig, "webhookSecret">> {
@@ -37,6 +41,8 @@ const DEFAULTS = {
   webhookPort: 3000,
   webhookPath: "/webhook",
   webhookSignatureHeader: "x-signature",
+  allowInsecure: false,
+  maxBodyBytes: 256 * 1024,
 };
 
 const toChatId = (userId: string) =>
@@ -65,7 +71,16 @@ export class OpenWaChannel implements Channel {
   }
 
   async start(onMessage: (msg: InboundMessage) => Promise<void>): Promise<void> {
-    const { webhookPort, webhookPath, webhookSecret, webhookSignatureHeader } = this.#cfg;
+    const { webhookPort, webhookPath, webhookSecret, webhookSignatureHeader, allowInsecure, maxBodyBytes } = this.#cfg;
+
+    // FAIL CLOSED: refuse to accept webhooks without HMAC auth unless explicitly
+    // opted into for local dev. Otherwise anyone could forge messages from any number.
+    if (!webhookSecret && !allowInsecure) {
+      throw new Error(
+        "OpenWA webhook refuses to start without webhookSecret (set WEBHOOK_SECRET). " +
+        "For local dev only, pass allowInsecure: true.",
+      );
+    }
 
     const server = createServer((req, res) => {
       if (req.method !== "POST" || req.url !== webhookPath) {
@@ -73,11 +88,24 @@ export class OpenWaChannel implements Channel {
         return;
       }
       const chunks: Buffer[] = [];
-      req.on("data", (c) => chunks.push(c as Buffer));
+      let size = 0;
+      let aborted = false;
+      req.on("data", (c) => {
+        if (aborted) return;
+        size += (c as Buffer).length;
+        if (size > maxBodyBytes) { // DoS guard: reject oversized bodies
+          aborted = true;
+          res.writeHead(413).end();
+          req.destroy();
+          return;
+        }
+        chunks.push(c as Buffer);
+      });
       req.on("end", async () => {
+        if (aborted) return;
         const raw = Buffer.concat(chunks).toString("utf8");
 
-        // SECURITY.md: verify the webhook signature before trusting the payload.
+        // Verify the HMAC signature before trusting the payload.
         if (webhookSecret && !verifySignature(raw, req.headers[webhookSignatureHeader], webhookSecret)) {
           logEvent("ai_error", { channel: "openwa", webhook: "bad_signature" });
           res.writeHead(401).end();
@@ -97,7 +125,7 @@ export class OpenWaChannel implements Channel {
     await new Promise<void>((resolve) => server.listen(webhookPort, resolve));
     logEvent("message_in", { channel: "openwa", listening: `${webhookPort}${webhookPath}`, started: true });
     if (!webhookSecret) {
-      console.warn("[openwa] WARNING: no webhookSecret set — inbound webhooks are unauthenticated.");
+      console.warn("[openwa] INSECURE MODE — webhooks are unauthenticated. Local dev only.");
     }
   }
 }

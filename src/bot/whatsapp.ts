@@ -43,6 +43,8 @@ const channel = new OpenWaChannel({
   session: process.env["OPENWA_SESSION"] ?? "default",
   webhookPort: Number(process.env["WEBHOOK_PORT"] ?? 3000),
   webhookSecret: process.env["WEBHOOK_SECRET"],
+  // Without WEBHOOK_SECRET the channel fails closed; opt into insecure for dev only.
+  allowInsecure: process.env["ALLOW_INSECURE_WEBHOOK"] === "1",
 });
 
 console.log(`TaxEasy WhatsApp (OpenWA) — AI: ${llm.provider}. Listening for webhooks…`);
