@@ -10,7 +10,7 @@ export { FY_2025_26 } from "./tax-rules/2025-26.ts";
 export type { TaxRuleSet, Slab } from "./tax-rules/2025-26.ts";
 export { incomeTax, slabTax } from "./income-tax.ts";
 export { detectScheme, presumptiveIncome } from "./presumptive.ts";
-export { gstOnInvoice, gstRegistrationRequired } from "./gst.ts";
+export { gstOnInvoice, gstRegistrationRequired, gstLiability } from "./gst.ts";
 export { itcStatus } from "./itc.ts";
 export { advanceTaxDue } from "./advance-tax.ts";
 

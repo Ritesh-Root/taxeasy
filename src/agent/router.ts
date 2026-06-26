@@ -19,6 +19,7 @@ import {
   noticePenaltyAnswer,
   valuePivotAnswer,
   reassuranceAnswer,
+  gstLiabilityAnswer,
 } from "./advisory.ts";
 import { t } from "./i18n.ts";
 import type { Lang } from "./i18n.ts";
@@ -69,6 +70,8 @@ export const SYSTEM_PROMPT =
 
 const ESTIMATE_RX = /\b(my tax|how much tax|calculate|estimate|kitna tax|tax kitna|liability)\b/i;
 // Multilingual: "do I need GST", "mujhe GST lena padega", "GST chahiye", "GST lagega"
+// GST liability (output−input netting) — distinct from registration. Check first.
+const GST_LIABILITY_RX = /(gst|जीएसटी).*(input credit|after input|net|payable|how much|kitna|pay).*|input.*credit|net gst|kitna gst|how much gst/i;
 const GST_REG_RX = /(do i need gst|need gst|gst regist|register.*gst|gst lena|gst lega|gst chahiy|gst lagega|gst.*(zaroorat|required|threshold)|mujhe gst|जीएसटी)/i;
 const PRESUMPTIVE_RX = /(presumptive.*(eligib|use|apply|qualif|scheme|allow|at my)|can i use (44ad|44ada|presumptive)|44ada?\b.*(eligib|use))/i;
 // Phase B advisory intents (multilingual).
@@ -87,6 +90,10 @@ export async function route(
 
   // 0) Engine-backed advisory (multilingual) — answer precisely from the profile
   //    instead of punting to generic AI (persona-sim finding).
+  if (GST_LIABILITY_RX.test(text)) {
+    logEvent("engine_call", { userId: profile.userId, intent: "gst_liability" });
+    return { text: `${gstLiabilityAnswer(lang)}\n\n${disclaimer(lang)}`, source: "engine", lang };
+  }
   if (GST_REG_RX.test(text)) {
     const ans = gstRegistrationAnswer(profile, lang);
     if (ans) {

@@ -193,6 +193,17 @@ const CATALOG: Catalog = {
   "trigger.gstr3b": { en: "🗓️ GSTR-3B is due {date}. Want me to prep the summary?", hi: "🗓️ GSTR-3B {date} को देय है। समरी तैयार कर दूँ?", hinglish: "🗓️ GSTR-3B {date} ko due hai. Summary bana dun?" },
   "trigger.itr": { en: "🗓️ Your ITR (business/presumptive) is due {date}. I'll get your numbers ready.", hi: "🗓️ आपका ITR (व्यापार/प्रिज़म्प्टिव) {date} को देय है। मैं आपके आँकड़े तैयार कर दूँगा।", hinglish: "🗓️ Aapka ITR (business/presumptive) {date} ko due hai. Main numbers ready kar dunga." },
   "trigger.lut": { en: "🗓️ Renew your LUT before {date}, or exports attract 18% IGST.", hi: "🗓️ {date} से पहले अपना LUT रिन्यू करें, वरना निर्यात पर 18% IGST लगेगा।", hinglish: "🗓️ {date} se pehle apna LUT renew karo, warna export par 18% IGST lagega." },
+  // ---- GST liability for traders (Phase C) ----
+  "advisory.gst_liability": {
+    en: "Your GST payable = output GST (on your sales) − input credit (GST on your eligible business purchases). Tell me your monthly sales GST and purchase GST and I'll net it exactly. Tip: keep purchase invoices in your firm's name to claim full input credit.",
+    hi: "आपका देय GST = आउटपुट GST (बिक्री पर) − इनपुट क्रेडिट (आपकी पात्र ख़रीद पर GST)। मुझे महीने का बिक्री GST और ख़रीद GST बताइए, मैं ठीक-ठीक नेट कर दूँगा। सुझाव: पूरा इनपुट क्रेडिट लेने के लिए ख़रीद के बिल अपनी फर्म के नाम पर रखें।",
+    hinglish: "Aapka GST payable = output GST (sales par) − input credit (eligible purchases par GST). Mujhe monthly sales GST aur purchase GST batao, main exactly net kar dunga. Tip: poora input credit lene ke liye purchase invoices apni firm ke naam par rakho.",
+  },
+  "insights.gst_trader": {
+    en: "💡 As a GST-registered business, your main monthly tax is GST (output − input), not income tax — I'll help you compute and file it.",
+    hi: "💡 GST-रजिस्टर्ड व्यापार के लिए आपका मुख्य मासिक टैक्स GST (आउटपुट − इनपुट) है, इनकम टैक्स नहीं — मैं गणना और फाइलिंग में मदद करूँगा।",
+    hinglish: "💡 GST-registered business ke liye aapka main monthly tax GST (output − input) hai, income tax nahi — main compute aur file karne me madad karunga.",
+  },
 };
 
 /** Render a catalog key in the given language with {var} substitution. */

@@ -44,6 +44,30 @@ export function gstOnInvoice(
   return { type: "IGST", igst, totalGst: igst };
 }
 
+export interface GstLiabilityInput {
+  /** Output GST collected on sales this period. */
+  outputGst: number;
+  /** Input GST on ELIGIBLE business purchases (caller filters §17(5) via itcStatus). */
+  inputGstEligible: number;
+}
+
+export interface GstLiabilityResult {
+  outputGst: number;
+  inputCredit: number;
+  /** Net GST to pay (output − input), floored at 0. */
+  netPayable: number;
+  /** Credit carried forward when input exceeds output. */
+  carryForward: number;
+}
+
+/** Output−input GST netting — the real monthly tax for a registered trader. */
+export function gstLiability(input: GstLiabilityInput): GstLiabilityResult {
+  const outputGst = Math.round(input.outputGst);
+  const inputCredit = Math.round(input.inputGstEligible);
+  const net = outputGst - inputCredit;
+  return { outputGst, inputCredit, netPayable: Math.max(0, net), carryForward: net < 0 ? -net : 0 };
+}
+
 export interface GstRegistrationResult {
   required: boolean;
   threshold: number;

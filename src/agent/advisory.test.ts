@@ -42,6 +42,15 @@ test("overwhelmed user → empathetic hand-holding, no AI punt", async () => {
   assert.match(reassuranceAnswer("hi"), /[ऀ-ॿ]/);
 });
 
+test("GST-liability question is answered by the engine, not punted (Suresh)", async () => {
+  const llm = new MockLlmClient();
+  const suresh: UserProfile = { userId: "s", profession: "garments wholesale trader", grossReceipts: 12_000_000, incomeType: "BUSINESS" };
+  const r = await route("how much GST do I actually pay after input credit?", suresh, { llm, lang: "en" });
+  assert.equal(r.source, "engine");
+  assert.equal(llm.calls.length, 0);
+  assert.match(r.text, /output GST.*input credit/);
+});
+
 test("proactiveTriggers fires near a deadline and stays quiet otherwise", () => {
   const trader: UserProfile = { userId: "t", profession: "wholesale trader", grossReceipts: 12_000_000, incomeType: "BUSINESS" };
   // 13 Jun → advance-tax (15 Jun) within 7 days.

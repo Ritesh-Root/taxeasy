@@ -50,6 +50,8 @@ export function proactiveInsights(p: UserProfileData, lang: Lang = "en"): string
       threshold: inr(gst.threshold),
       kind: t(goods ? "kind.goods" : "kind.services", lang),
     }));
+    // For a registered trader, GST (not income tax) is the real monthly burden.
+    if (goods) out.push(t("insights.gst_trader", lang));
   }
 
   const est = estimateTax({
@@ -95,6 +97,11 @@ export function valuePivotAnswer(p: UserProfileData, lang: Lang = "en"): string 
 /** Empathetic hand-holding for an overwhelmed / low-literacy user (S6). */
 export function reassuranceAnswer(lang: Lang = "en"): string {
   return t("advisory.reassurance", lang);
+}
+
+/** GST output−input netting explainer for traders (S4) — formula + offer to compute. */
+export function gstLiabilityAnswer(lang: Lang = "en"): string {
+  return t("advisory.gst_liability", lang);
 }
 
 /**

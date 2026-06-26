@@ -13,6 +13,7 @@ import {
   presumptiveIncome,
   gstOnInvoice,
   gstRegistrationRequired,
+  gstLiability,
   itcStatus,
   advanceTaxDue,
   estimateTax,
@@ -106,6 +107,13 @@ test("GST: export with LUT → 0; without LUT → 18% IGST", () => {
 
 test("GST registration: ₹60L goods turnover → required", () => {
   assert.equal(gstRegistrationRequired(6_000_000, true).required, true);
+});
+
+test("GST liability: output − input netting (and carry-forward)", () => {
+  assert.equal(gstLiability({ outputGst: 100_000, inputGstEligible: 60_000 }).netPayable, 40_000);
+  const refund = gstLiability({ outputGst: 50_000, inputGstEligible: 80_000 });
+  assert.equal(refund.netPayable, 0);
+  assert.equal(refund.carryForward, 30_000);
 });
 
 test("ITC: §17(5) blocked, business eligible, personal/unknown NOT eligible (safe default)", () => {
