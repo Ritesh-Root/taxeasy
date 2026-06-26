@@ -33,7 +33,10 @@ export interface EstimateInput {
 
 export interface TaxEstimate {
   readonly presumptive: PresumptiveResult;
-  readonly tax: IncomeTaxResult;
+  /** null when presumptive is NOT applicable (turnover over the cap) — we must
+   *  not present a falsely low presumptive tax; actual books are required. */
+  readonly tax: IncomeTaxResult | null;
+  readonly presumptiveApplicable: boolean;
   readonly auditWarning: string | null;
 }
 
@@ -52,11 +55,15 @@ export function estimateTax(
 
   const scheme = detectScheme(profession);
   const presumptive = presumptiveIncome(grossReceipts, scheme, mostlyDigital, rules);
-  const tax = incomeTax(presumptive.presumptiveIncome, regime, rules);
 
-  const auditWarning = !presumptive.withinLimit
-    ? `Turnover ₹${grossReceipts.toLocaleString("en-IN")} exceeds the ${scheme} presumptive limit of ₹${presumptive.limit.toLocaleString("en-IN")} — presumptive scheme unavailable; books + audit likely required.`
+  // Over the cap, presumptive taxation is not legally available — applying the
+  // 6%/8%/50% rate would massively understate tax. Withhold the number instead.
+  const presumptiveApplicable = presumptive.withinLimit;
+  const tax = presumptiveApplicable ? incomeTax(presumptive.presumptiveIncome, regime, rules) : null;
+
+  const auditWarning = !presumptiveApplicable
+    ? `Turnover ₹${grossReceipts.toLocaleString("en-IN")} exceeds the ${scheme} presumptive limit of ₹${presumptive.limit.toLocaleString("en-IN")} — presumptive scheme unavailable; maintain books (income − expenses) and a tax audit is likely required.`
     : null;
 
-  return { presumptive, tax, auditWarning };
+  return { presumptive, tax, presumptiveApplicable, auditWarning };
 }

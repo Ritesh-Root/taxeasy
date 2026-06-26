@@ -80,14 +80,20 @@ export async function route(
       logEvent("engine_call", {
         userId: profile.userId,
         scheme: est.presumptive.scheme,
-        total: est.tax.total,
+        applicable: est.presumptiveApplicable,
+        total: est.tax?.total ?? null,
       });
+      // Over the presumptive cap → withhold the (falsely low) number; guide instead.
+      if (!est.presumptiveApplicable || est.tax === null) {
+        const reply = `⚠️ ${est.auditWarning}\n\n${DISCLAIMER}`;
+        logEvent("message_out", { userId: profile.userId, source: "engine" });
+        return { text: reply, source: "engine" };
+      }
       const reply =
         `Scheme: ${est.presumptive.scheme} · presumptive income ₹${est.presumptive.presumptiveIncome.toLocaleString("en-IN")} ` +
         `(${Math.round(est.presumptive.rateApplied * 100)}% of ₹${est.presumptive.grossReceipts.toLocaleString("en-IN")}).\n` +
         `Estimated tax: ₹${est.tax.total.toLocaleString("en-IN")} (new regime).` +
         (est.tax.total === 0 ? " You're within the §87A rebate — ₹0 tax." : "") +
-        (est.auditWarning ? `\n⚠️ ${est.auditWarning}` : "") +
         `\n\n${DISCLAIMER}`;
       logEvent("message_out", { userId: profile.userId, source: "engine" });
       return { text: reply, source: "engine" };

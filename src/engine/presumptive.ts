@@ -17,8 +17,23 @@ const PROFESSIONS_44ADA = new Set<string>([
   "developer", "interior", "film", "artist", "technical",
 ]);
 
+/**
+ * Trader/retail indicators. These OVERRIDE a professional keyword, because the
+ * sale of goods is §44AD even when the name borrows a profession word — e.g.
+ * "medical store" (pharmacy), "IT hardware shop", "engineering goods trader".
+ * (Found by the engine stress sim: 7/7 such traders were mis-flagged 44ADA.)
+ */
+const TRADER_TOKENS = new Set<string>([
+  "store", "shop", "trader", "trading", "retail", "retailer", "wholesale",
+  "wholesaler", "reseller", "dealer", "mart", "kirana", "boutique", "goods",
+  "stationery", "hardware", "grocery", "supermarket", "distributor", "vendor",
+]);
+
 export function detectScheme(profession: string): PresumptiveScheme {
   const tokens = new Set((profession ?? "").toLowerCase().match(/[a-z]+/g) ?? []);
+  for (const t of tokens) {
+    if (TRADER_TOKENS.has(t)) return "44AD"; // selling goods → business, overrides profession words
+  }
   for (const t of tokens) {
     if (PROFESSIONS_44ADA.has(t)) return "44ADA";
   }

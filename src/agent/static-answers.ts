@@ -28,16 +28,28 @@ export const STATIC_ANSWERS: Record<string, string> = {
   lut_renewal:
     "Export of services is 0% IGST only with a valid LUT (Form RFD-11). It expires every " +
     "31 March — renew before 1 April or exports attract 18% IGST.",
+  late_fee:
+    "GST late fee ≈ ₹50/day (₹25 CGST + ₹25 SGST), ₹20/day for nil returns, capped ₹5,000/return, " +
+    "plus 18%/yr interest on tax due. (Planning estimate — verify before relying on it.)",
+  deadlines_overview:
+    "Key recurring deadlines: GSTR-1 11th · GSTR-3B 20th · advance tax 15 Jun/Sep/Dec/Mar · " +
+    "ITR-3/4 (business) 31 Aug · LUT renewal by 1 Apr. I can remind you before each.",
 };
 
-/** Keyword → static-answer key. Cheap intent match before any AI. */
+/**
+ * Keyword → static-answer key. Cheap intent match BEFORE any AI call.
+ * Patterns are suffix-tolerant (date/dates, renew/renewal) — the routing sim
+ * showed strict \b...\b boundaries leaked deterministic queries to the AI.
+ */
 const STATIC_PATTERNS: { key: keyof typeof STATIC_ANSWERS | string; rx: RegExp }[] = [
-  { key: "gst_due_dates", rx: /\b(gstr|gst return|3b|gstr-?1)\b.*\b(due|date|when|file)\b|\bwhen.*gst.*(due|file)\b/i },
-  { key: "gst_threshold", rx: /\b(gst).*(threshold|register|registration|limit|need)\b|\bdo i need gst\b/i },
-  { key: "advance_tax_dates", rx: /\badvance tax\b.*\b(date|when|due|schedule)\b|\bwhen.*advance tax\b/i },
-  { key: "itr_deadlines", rx: /\b(itr|income tax return)\b.*\b(deadline|date|when|due|last)\b/i },
-  { key: "new_regime_slabs", rx: /\b(slab|tax rate|new regime|rates)\b/i },
-  { key: "lut_renewal", rx: /\b(lut|export).*\b(gst|igst|renew|expire)\b/i },
+  { key: "late_fee", rx: /\b(late fee|penalt|fine|interest)\b.*\b(gst|gstr|filing|return|file|tax)\b|\b(gst|return).*(late|penalt)/i },
+  { key: "gst_due_dates", rx: /\b(gstr|gst return|3b|gstr-?1)\b.*(due|date|when|file)|when.*gst.*(due|file)/i },
+  { key: "gst_threshold", rx: /\bgst\b.*(threshold|regist|limit|need|require)|do i need gst/i },
+  { key: "advance_tax_dates", rx: /advance tax.*(date|when|due|schedul|pay)|when.*advance tax/i },
+  { key: "itr_deadlines", rx: /\b(itr|income tax return)\b.*(deadline|date|when|due|last|file)/i },
+  { key: "deadlines_overview", rx: /\b(deadline|reminder|due date|remind me)\b/i },
+  { key: "new_regime_slabs", rx: /\b(slab|tax rate|new regime|tax bracket|rates)\b/i },
+  { key: "lut_renewal", rx: /\b(lut|export)\b.*(gst|igst|renew|expir)/i },
 ];
 
 export function matchStaticAnswer(text: string): string | null {
