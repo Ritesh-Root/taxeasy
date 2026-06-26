@@ -40,8 +40,12 @@ export interface GstResult {
   readonly note?: string;
 }
 
+export type ItcStatus = "eligible" | "blocked" | "ineligible" | "review";
+
 export interface ItcResult {
   readonly eligible: boolean;
+  /** Finer-grained outcome: "review" means confirm business use before claiming. */
+  readonly status: ItcStatus;
   readonly reason: string;
 }
 

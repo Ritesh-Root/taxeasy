@@ -108,10 +108,15 @@ test("GST registration: ₹60L goods turnover → required", () => {
   assert.equal(gstRegistrationRequired(6_000_000, true).required, true);
 });
 
-test("ITC: restaurant blocked, software eligible", () => {
-  assert.equal(itcStatus("restaurant lunch", true).eligible, false);
+test("ITC: §17(5) blocked, business eligible, personal/unknown NOT eligible (safe default)", () => {
+  assert.equal(itcStatus("restaurant lunch", true).status, "blocked");
   assert.equal(itcStatus("Figma software subscription", true).eligible, true);
-  assert.equal(itcStatus("software", false).eligible, false); // no invoice
+  assert.equal(itcStatus("software", false).status, "review"); // no invoice
+  // B1 fix: personal spend with an invoice is NOT auto-eligible
+  assert.equal(itcStatus("household groceries", true).eligible, false);
+  assert.equal(itcStatus("transportation", true).eligible, false);
+  // unknown/dual-use → review, never silently claimed
+  assert.equal(itcStatus("misc subscription", true).status, "review");
 });
 
 test("advance tax: <₹10k not required; presumptive pays 100% by 15 Mar", () => {

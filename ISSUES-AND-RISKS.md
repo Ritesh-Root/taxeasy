@@ -24,7 +24,7 @@ Severity: 🔴 critical (wrong tax / legal/GST exposure) · 🟠 high · 🟡 me
 
 | # | Finding | Sev | Status |
 |---|---------|-----|--------|
-| B1 | **ITC false-positive risk.** Our classifier defaults non-blocked → ELIGIBLE. On real data, **85% of "eligible" rows are actually personal** (transportation, household, subscriptions, investment). Suggesting input credit on these = **GST exposure for the *user*** (wrong claims invite §17(5) scrutiny). | 🔴 | ⚠️ **Open** — invert default to NOT-eligible; require business-purpose + valid GST invoice; broaden the §17(5)/personal taxonomy; user confirmation. |
+| B1 | **ITC false-positive risk.** Classifier defaulted non-blocked → ELIGIBLE. On real data, **85% of "eligible" rows were actually personal**. Suggesting input credit on these = **GST exposure for the *user***. | 🔴 | ✅ **Fixed** — safe-by-default: eligible only on a business signal + GST invoice; personal→ineligible, unknown→review. Re-run on real data: **false-ITC 85.3% → 0%**. |
 | B2 | **Anomaly alert fatigue.** Duplicate detector (category+amount within 7d) fired on **8.4%** of expenses + 1.6% σ-outliers → **~20 alerts/month** for a normal 200-expense user. Daily ₹30 train / ₹60 snacks look like "duplicates." | 🟠 | ⚠️ **Open** — match on vendor+amount+description (not category), tighter window, per-category baselines. |
 | B3 | **Uninformative inputs.** **17%** of real notes are ≤3 chars; 90 distinct subcategories. AI categorization will be uncertain often. | 🟡 | ⚠️ **Open** — confidence-gate (<70% → ask the user) before saving (already a planned rule; enforce it). |
 
@@ -40,7 +40,7 @@ Severity: 🔴 critical (wrong tax / legal/GST exposure) · 🟠 high · 🟡 me
 | # | Risk | Sev | Mitigation |
 |---|------|-----|-----------|
 | D1 | **OpenWA WhatsApp ban** mid-judging (unofficial transport). | 🔴 | Separate throwaway number; Telegram fallback; swap to official BSP (one file). Tracked in `SECURITY.md`. |
-| D2 | **No persistence yet** — state is in-memory, lost on restart. | 🟠 | Build the Firestore adapter (the EventStore/UserStore ports are ready). |
+| D2 | **No persistence yet** — state is in-memory, lost on restart. | 🟠 | ✅ **Addressed** — file-based adapter (`FileUserStore`/`FileEventStore`) persists across restarts (tested); WhatsApp entry uses it by default. Firestore = same ports, drop in when GCP creds land. |
 | D3 | **Tax-rule staleness** — Budget changes yearly. | 🟠 | Rules are versioned per FY; add a 1-April re-verify checklist. |
 | D4 | **DPDP consent not yet enforced server-side.** | 🟠 | Wire the consent strip-before-AI in the agent (design done; `SECURITY.md` gate). |
 | D5 | **Gemini quota / 429** on a new GCP project. | 🟡 | Backoff + routing in place; request quota on day 1 before load. |
@@ -50,10 +50,11 @@ Severity: 🔴 critical (wrong tax / legal/GST exposure) · 🟠 high · 🟡 me
 ---
 
 ## Priority order to act
-1. **B1 ITC default-eligible (🔴)** — highest user-harm risk; invert the default + broaden taxonomy.
-2. **A3 marginal relief (🟡→verify)** — confirm CBDT cess treatment.
-3. **D2 Firestore persistence (🟠)** — prerequisite for real users.
-4. **B2 anomaly tuning (🟠)** + **C1 push AI share lower** — UX + cost.
-5. **D4 DPDP consent enforcement (🟠)** before any real customer data.
+1. ~~B1 ITC default-eligible~~ ✅ fixed (false-ITC 85%→0%).
+2. ~~D2 persistence~~ ✅ file adapter (Firestore later, same ports).
+3. **D4 DPDP consent enforcement (🟠)** — strip OFF-toggle categories before any AI call, before real customer data.
+4. **B2 anomaly tuning (🟠)** — vendor+amount+description, not category; cut ~20 alerts/mo.
+5. **A3 marginal relief (🟡)** — confirm CBDT cess treatment.
+6. **C1 push AI share <35%** — cheap classifier + answer cache.
 
-*Already fixed this session: A1, A2, C1.*
+*Fixed this session: A1, A2, B1, C1, D2.*

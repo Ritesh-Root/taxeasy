@@ -21,7 +21,7 @@ import { OpenWaChannel } from "../channels/openwa.ts";
 import { GeminiClient } from "../ai/gemini.ts";
 import { MockLlmClient } from "../ai/mock.ts";
 import type { LlmClient } from "../ai/types.ts";
-import { InMemoryEventStore, InMemoryUserStore } from "../ports/memory.ts";
+import { FileEventStore, FileUserStore } from "../ports/file-store.ts";
 
 const apiKey = process.env["OPENWA_API_KEY"];
 if (!apiKey) {
@@ -32,8 +32,10 @@ if (!apiKey) {
 const geminiKey = process.env["GEMINI_API_KEY"];
 const llm: LlmClient = geminiKey ? new GeminiClient({ apiKey: geminiKey }) : new MockLlmClient();
 
-// TODO: swap to the Firestore adapter for persistence across restarts.
-const agent = new TaxEasyAgent({ llm, users: new InMemoryUserStore(), events: new InMemoryEventStore() });
+// Durable file store (survives restarts). Swap to a Firestore adapter — same
+// ports — when GCP creds land; the events.jsonl file is your portable log.
+const dataDir = process.env["DATA_DIR"] ?? "./.data";
+const agent = new TaxEasyAgent({ llm, users: new FileUserStore(dataDir), events: new FileEventStore(dataDir) });
 
 const channel = new OpenWaChannel({
   apiKey,

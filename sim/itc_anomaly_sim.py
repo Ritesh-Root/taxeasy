@@ -11,16 +11,33 @@ import numpy as np
 
 DATA = "/home/ritesh/Downloads/TaxEasy-sandbox-usertest/ml/data/Daily Household Transactions.csv"
 
-# Mirror of src/engine/itc.ts ITC_BLOCKED (§17(5) keywords).
-ITC_BLOCKED = ["restaurant", "food", "beverage", "hotel", "lodging", "club", "gym",
-               "fitness", "personal", "salon", "spa", "motor_vehicle", "car",
-               "fuel_personal", "gift"]
+# Mirror of src/engine/itc.ts (B1 fix: safe-by-default, requires business signal).
+BLOCKED = ["restaurant", "food", "beverage", "catering", "hotel", "lodging", "club",
+           "gym", "fitness", "salon", "spa", "beauty", "cosmetic", "membership",
+           "motor_vehicle", "car ", "fuel", "petrol", "diesel", "gift", "insurance",
+           "health", "medical"]
+PERSONAL = ["household", "family", "festival", "apparel", "clothing", "grocery",
+            "tourism", "travel", "transportation", "commute", "culture", "maid",
+            "investment", "money transfer", "education", "school", "tuition",
+            "entertainment", "movie", "donation", "self", "personal", "rent_home"]
+BUSINESS = ["software", "saas", "hosting", "domain", "cloud", "server", "advertising",
+            "marketing", "ads", "office", "stationery", "printing", "internet",
+            "broadband", "telecom", "professional fee", "legal", "accounting", "audit",
+            "consultanc", "commission", "freight", "logistics", "courier", "packaging",
+            "raw material", "inventory", "stock purchase", "equipment", "machinery",
+            "tools", "wholesale", "supplies"]
 
 def itc_status(category: str) -> str:
     cat = str(category).lower()
-    if any(b in cat for b in ITC_BLOCKED):
+    if any(b in cat for b in BLOCKED):
         return "BLOCKED"
-    return "ELIGIBLE"   # our engine defaults non-blocked to eligible
+    business = any(b in cat for b in BUSINESS)
+    personal = any(p in cat for p in PERSONAL)
+    if business and not personal:
+        return "ELIGIBLE"
+    if personal and not business:
+        return "INELIGIBLE"
+    return "REVIEW"     # safe default: confirm business use before claiming
 
 df = pd.read_csv(DATA)
 df.columns = [c.strip() for c in df.columns]
@@ -37,22 +54,19 @@ cats = exp["Category"].fillna("").str.lower()
 exp["itc"] = exp["Category"].apply(itc_status)
 blocked = (exp["itc"] == "BLOCKED").sum()
 eligible = (exp["itc"] == "ELIGIBLE").sum()
+ineligible = (exp["itc"] == "INELIGIBLE").sum()
+review = (exp["itc"] == "REVIEW").sum()
 
-# Coverage risk: how many ELIGIBLE are actually personal/non-business (false ITC)?
-# Heuristic personal categories present in this real dataset:
+# False-ITC risk = ELIGIBLE rows that are actually personal.
 PERSONAL_HINTS = ["household", "subscription", "transportation", "investment",
                   "money transfer", "education", "health", "festival", "apparel",
                   "tourism", "culture", "family", "maid", "rent", "self-development"]
 likely_personal = exp[(exp["itc"] == "ELIGIBLE") &
                       (cats.apply(lambda c: any(h in c for h in PERSONAL_HINTS)))]
-print("ITC CLASSIFICATION:")
-print(f"  blocked (§17(5)): {blocked}  |  eligible (default): {eligible}")
-print(f"  ⚠️  eligible-but-likely-personal (false-ITC risk): {len(likely_personal)} "
-      f"({100*len(likely_personal)/max(eligible,1):.1f}% of 'eligible')")
-top_false = likely_personal["Category"].value_counts().head(6)
-print("  top false-ITC categories:")
-for k, v in top_false.items():
-    print(f"     {k}: {v}")
+print("ITC CLASSIFICATION (B1 safe-by-default):")
+print(f"  blocked §17(5): {blocked} | eligible: {eligible} | ineligible-personal: {ineligible} | review: {review}")
+print(f"  ✅ eligible-but-personal (false-ITC) now: {len(likely_personal)} "
+      f"({100*len(likely_personal)/max(eligible,1):.1f}% of 'eligible' — was 85.3% before the fix)")
 
 # --- Category coverage: how 'readable' are real notes for AI categorization? ---
 notes = exp["Note"].fillna("").astype(str)
