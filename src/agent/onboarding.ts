@@ -10,6 +10,7 @@
  */
 import type { OnboardingStep, UserProfileData, UserModelData } from "../ports/types.ts";
 import { detectScheme, estimateTax } from "../engine/index.ts";
+import { proactiveInsights } from "./advisory.ts";
 import { DISCLAIMER } from "./router.ts";
 
 export interface OnboardingResult {
@@ -126,11 +127,15 @@ export function handleOnboarding(
           : `\n\n⚠️ ${est.auditWarning}`;
       }
       const shared = Object.keys(consent).filter((k) => consent[k as keyof typeof consent]);
+      // Proactive CA guidance — volunteer what matters before being asked.
+      const insights = proactiveInsights(merged);
+      const insightBlock = insights.length ? `\n\n${insights.join("\n")}` : "";
       return {
         reply:
           `✅ You're all set! Sharing: ${shared.length ? shared.join(", ") : "nothing yet"}.` +
           estimateLine +
-          `\n\nAsk me anything — \"my tax?\", \"when is GSTR-3B due?\", or send a bill photo.\n\n${DISCLAIMER}`,
+          insightBlock +
+          `\n\nAsk me anything — \"my tax?\", \"do I need GST?\", or send a bill photo.\n\n${DISCLAIMER}`,
         profilePatch: { consent },
         nextStep: "done",
         complete: true,

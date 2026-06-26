@@ -13,6 +13,7 @@ import type { LlmClient } from "../ai/types.ts";
 import { estimateTax, advanceTaxDue } from "../engine/index.ts";
 import type { IncomeType, Regime } from "../engine/types.ts";
 import { matchStaticAnswer } from "./static-answers.ts";
+import { gstRegistrationAnswer, presumptiveEligibilityAnswer } from "./advisory.ts";
 import { logEvent } from "../observability/log.ts";
 
 export const DISCLAIMER =
@@ -51,6 +52,9 @@ export const SYSTEM_PROMPT =
   "If asked for a number you don't have, ask the user to run an estimate.";
 
 const ESTIMATE_RX = /\b(my tax|how much tax|calculate|estimate|kitna tax|tax kitna|liability)\b/i;
+// Multilingual: "do I need GST", "mujhe GST lena padega", "GST chahiye", "GST lagega"
+const GST_REG_RX = /(do i need gst|need gst|gst regist|register.*gst|gst lena|gst lega|gst chahiy|gst lagega|gst.*(zaroorat|required|threshold)|mujhe gst|जीएसटी)/i;
+const PRESUMPTIVE_RX = /(presumptive.*(eligib|use|apply|qualif|scheme|allow|at my)|can i use (44ad|44ada|presumptive)|44ada?\b.*(eligib|use))/i;
 
 export async function route(
   message: string,
@@ -59,6 +63,23 @@ export async function route(
 ): Promise<AgentReply> {
   const text = message.trim();
   logEvent("message_in", { userId: profile.userId, chars: text.length });
+
+  // 0) Engine-backed advisory (multilingual) — answer precisely from the profile
+  //    instead of punting to generic AI (persona-sim finding).
+  if (GST_REG_RX.test(text)) {
+    const ans = gstRegistrationAnswer(profile);
+    if (ans) {
+      logEvent("engine_call", { userId: profile.userId, intent: "gst_registration" });
+      return { text: `${ans}\n\n${DISCLAIMER}`, source: "engine" };
+    }
+  }
+  if (PRESUMPTIVE_RX.test(text)) {
+    const ans = presumptiveEligibilityAnswer(profile);
+    if (ans) {
+      logEvent("engine_call", { userId: profile.userId, intent: "presumptive_eligibility" });
+      return { text: `${ans}\n\n${DISCLAIMER}`, source: "engine" };
+    }
+  }
 
   // 1) Static deterministic facts — no AI.
   const staticAns = matchStaticAnswer(text);
