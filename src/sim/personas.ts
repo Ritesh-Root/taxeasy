@@ -23,14 +23,14 @@ export const PERSONAS: Persona[] = [
   {
     id: "lakshmi",
     name: "Lakshmi (kirana store)",
-    blurb: "kirana/grocery shop owner, ₹60L turnover, mostly cash, low tech literacy, speaks Hindi",
+    blurb: "kirana/grocery shop owner, ₹60L turnover, mostly cash, low tech literacy, speaks Hindi (Devanagari)",
     lang: "hi",
     goals: ["does she need GST registration", "fear of a tax notice", "keep it simple"],
     script: [
-      "namaste", "kirana store", "60 lakh", "cash", "income",
-      "mujhe GST lena padega kya?",
-      "agar nahi liya to notice aayega?",
-      "ye sab mujhe samajh nahi aata, aap hi sambhal lo",
+      "नमस्ते", "किराना दुकान", "60 लाख", "कैश", "income",
+      "मुझे जीएसटी लेना पड़ेगा क्या?",
+      "अगर नहीं लिया तो नोटिस आएगा?",
+      "ये सब मुझे समझ नहीं आता, आप ही सँभाल लो",
     ],
   },
   {
@@ -40,7 +40,7 @@ export const PERSONAS: Persona[] = [
     lang: "hinglish",
     goals: ["foreign income tax", "LUT for exports", "advance tax", "is ₹0 tax really correct"],
     script: [
-      "hi", "freelance software developer", "18 lakh", "digital", "all",
+      "hii bhai", "freelance software developer", "18 lakh", "digital", "all",
       "mera client US me hai, foreign income pe tax kaise lagega?",
       "LUT kya hota hai, mujhe lena chahiye?",
       "advance tax kab bharu?",

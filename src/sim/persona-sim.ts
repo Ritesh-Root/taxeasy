@@ -28,14 +28,12 @@ const agentLlm: LlmClient = key ? new GeminiClient({ apiKey: key }) : new MockLl
 const personaLlm: LlmClient | null = useLlmPersonas ? new GeminiClient({ apiKey: key! }) : null;
 const OUT = "sim/out";
 
-const hasDevanagari = (s: string) => /[ऀ-ॿ]/.test(s);
-
 interface Metrics {
   turns: number;
   static: number;
   engine: number;
   ai: number;
-  langMismatch: number; // non-English persona got an English templated reply
+  langMismatch: number; // deterministic reply not rendered in the persona's language
 }
 
 /** Ask Gemini Flash to produce this persona's next message (emergent mode). */
@@ -71,8 +69,8 @@ async function runPersona(persona: Persona): Promise<{ metrics: Metrics; transcr
 
     m.turns++;
     m[reply.source]++;
-    // Non-English persona getting an English template (static/engine) = friction.
-    if (persona.lang !== "en" && reply.source !== "ai" && !hasDevanagari(reply.text)) m.langMismatch++;
+    // A deterministic (static/engine) reply not rendered in the persona's language = friction.
+    if (persona.lang !== "en" && reply.source !== "ai" && reply.lang !== persona.lang) m.langMismatch++;
   }
   return { metrics: m, transcript: lines.join("\n") };
 }

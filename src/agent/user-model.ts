@@ -20,7 +20,8 @@ export function defaultModel(): UserModelData {
 
 const DEVANAGARI = /[ऀ-ॿ]/;
 // Common romanised-Hindi tokens → detect Hinglish even in Latin script.
-const HINGLISH_TOKENS = /\b(kitna|kaise|kya|nahi|haan|mera|mujhe|paisa|hai|kar|bhai|chahiye|batao)\b/i;
+const HINGLISH_TOKENS =
+  /\b(kitna|kaise|kya|nahi|haan|mera|mere|mujhe|paisa|paise|rupay|rupaye|hai|kar|karu|karna|bhai|chahiye|batao|bata|namaste|namaskar|hii+|padega|padegi|lega|legi|lena|dena|milta|milega|sambhal|samajh|aata|kyu|kyun|kaun|sarkari|hum|humein|hamein|lo|nahin|zaroorat)\b/i;
 
 /** Learn from one inbound message and return the updated model (pure). */
 export function updateModel(model: UserModelData, message: string): UserModelData {

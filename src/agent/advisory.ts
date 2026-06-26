@@ -1,29 +1,31 @@
 /**
- * The "agentic CA" layer — turns the agent from reactive (answer when asked) to
- * proactive (guide + suggest from what it already knows). Everything here is
- * engine-backed and deterministic, so it's specific and trustworthy, not a
- * vague LLM paragraph.
- *
- * Surfaced by the persona simulation: clients' real questions (GST registration,
- * advance tax, presumptive eligibility) were falling to generic AI even though
- * the engine can answer them precisely from the user's profile.
+ * The "agentic CA" layer — proactive + advisory, engine-backed and deterministic
+ * (specific, trustworthy), and now localized via the i18n catalog so a Hindi or
+ * Hinglish owner gets real guidance, not English prose.
  */
 import type { UserProfileData } from "../ports/types.ts";
 import { estimateTax, gstRegistrationRequired, advanceTaxDue } from "../engine/index.ts";
+import { t } from "./i18n.ts";
+import type { Lang } from "./i18n.ts";
 
 const dealsInGoods = (p: UserProfileData) => p.incomeType === "BUSINESS";
+const inr = (n: number) => n.toLocaleString("en-IN");
 
 /** Personalised GST-registration answer using the user's actual turnover. */
-export function gstRegistrationAnswer(p: UserProfileData): string | null {
+export function gstRegistrationAnswer(p: UserProfileData, lang: Lang = "en"): string | null {
   if (p.grossReceipts == null) return null;
-  const r = gstRegistrationRequired(p.grossReceipts, dealsInGoods(p));
-  return r.required
-    ? `${r.note} I can walk you through registration; small traders can opt for the composition scheme (~1% of turnover, simpler returns).`
-    : `${r.note} You can still register voluntarily if your buyers want input credit.`;
+  const goods = dealsInGoods(p);
+  const r = gstRegistrationRequired(p.grossReceipts, goods);
+  const vars = {
+    turnover: inr(p.grossReceipts),
+    threshold: inr(r.threshold),
+    kind: t(goods ? "kind.goods" : "kind.services", lang),
+  };
+  return t(r.required ? "advisory.gst_required" : "advisory.gst_not_required", lang, vars);
 }
 
 /** Definitive presumptive-eligibility answer (vs punting to the AI). */
-export function presumptiveEligibilityAnswer(p: UserProfileData): string | null {
+export function presumptiveEligibilityAnswer(p: UserProfileData, lang: Lang = "en"): string | null {
   if (p.grossReceipts == null || !p.profession) return null;
   const est = estimateTax({
     profession: p.profession,
@@ -31,22 +33,24 @@ export function presumptiveEligibilityAnswer(p: UserProfileData): string | null 
     incomeType: p.incomeType ?? "PROFESSION",
     ...(p.mostlyDigital != null ? { mostlyDigital: p.mostlyDigital } : {}),
   });
-  const cap = est.presumptive.limit.toLocaleString("en-IN");
-  return est.presumptiveApplicable
-    ? `Yes — at ₹${p.grossReceipts.toLocaleString("en-IN")} you're within the ${est.presumptive.scheme} cap (₹${cap}), so you can use presumptive taxation.`
-    : `No — ₹${p.grossReceipts.toLocaleString("en-IN")} exceeds the ${est.presumptive.scheme} cap (₹${cap}). You'll need books (income − expenses) and likely a tax audit.`;
+  const vars = { gross: inr(p.grossReceipts), scheme: est.presumptive.scheme, cap: inr(est.presumptive.limit) };
+  return t(est.presumptiveApplicable ? "advisory.presumptive_yes" : "advisory.presumptive_no", lang, vars);
 }
 
-/**
- * Proactive insights computed from the profile at onboarding (and re-checkable
- * later). This is the CA volunteering what matters before being asked.
- */
-export function proactiveInsights(p: UserProfileData): string[] {
+/** Proactive insights computed from the profile — the CA volunteering what matters. */
+export function proactiveInsights(p: UserProfileData, lang: Lang = "en"): string[] {
   if (p.grossReceipts == null || !p.profession) return [];
   const out: string[] = [];
+  const goods = dealsInGoods(p);
 
-  const gst = gstRegistrationRequired(p.grossReceipts, dealsInGoods(p));
-  if (gst.required) out.push(`⚠️ GST: ${gst.note} I can guide you through it.`);
+  const gst = gstRegistrationRequired(p.grossReceipts, goods);
+  if (gst.required) {
+    out.push(t("insights.gst", lang, {
+      turnover: inr(p.grossReceipts),
+      threshold: inr(gst.threshold),
+      kind: t(goods ? "kind.goods" : "kind.services", lang),
+    }));
+  }
 
   const est = estimateTax({
     profession: p.profession,
@@ -55,15 +59,12 @@ export function proactiveInsights(p: UserProfileData): string[] {
     ...(p.mostlyDigital != null ? { mostlyDigital: p.mostlyDigital } : {}),
   });
 
-  if (!est.presumptiveApplicable) {
-    out.push(`⚠️ ${est.auditWarning}`);
-  } else {
+  if (est.presumptiveApplicable) {
     if (p.grossReceipts > 0.9 * est.presumptive.limit) {
-      out.push(`📈 You're close to the ${est.presumptive.scheme} presumptive cap (₹${est.presumptive.limit.toLocaleString("en-IN")}) — crossing it means books + audit.`);
+      out.push(t("insights.near_cap", lang, { scheme: est.presumptive.scheme, cap: inr(est.presumptive.limit) }));
     }
     if (est.tax && est.tax.total >= 10_000) {
-      const at = advanceTaxDue(est.tax.total, true);
-      out.push(`🗓️ Advance tax ≈ ₹${est.tax.total.toLocaleString("en-IN")} this year — ${at.note} I'll remind you before the date.`);
+      out.push(t("insights.advance_tax", lang, { tax: inr(est.tax.total) }));
     }
   }
   return out.slice(0, 3);

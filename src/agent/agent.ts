@@ -13,7 +13,7 @@ import type { EventStore, UserStore, StoredUser } from "../ports/types.ts";
 import { route, SYSTEM_PROMPT } from "./router.ts";
 import type { AgentReply, UserProfile } from "./router.ts";
 import { defaultModel, updateModel, adaptSystemPrompt, applySegment } from "./user-model.ts";
-import { WELCOME, handleOnboarding } from "./onboarding.ts";
+import { welcome, handleOnboarding } from "./onboarding.ts";
 
 export interface AgentDeps {
   llm: LlmClient;
@@ -42,12 +42,13 @@ export class TaxEasyAgent {
       return this.#onboard(user, message);
     }
 
-    // Onboarded → learn, adapt, route.
+    // Onboarded → learn, adapt, route in the user's language.
     const model = updateModel(user.model, message);
     const profile: UserProfile = { userId, ...user.profile };
     const reply = await route(message, profile, {
       llm: this.#deps.llm,
       systemPrompt: adaptSystemPrompt(SYSTEM_PROMPT, model),
+      lang: model.language,
     });
 
     const updated: StoredUser = { ...user, model, updatedAt: new Date().toISOString() };
@@ -70,10 +71,10 @@ export class TaxEasyAgent {
       };
       await this.#deps.users.put(updated);
       await this.#deps.events.append({ userId: user.userId, type: "message_out", data: { onboarding: "welcome" } });
-      return { text: WELCOME, source: "static" };
+      return { text: welcome(learned.language), source: "static", lang: learned.language };
     }
 
-    const res = handleOnboarding(user.onboarding.step, message, user.profile);
+    const res = handleOnboarding(user.onboarding.step, message, user.profile, learned.language);
     const model = res.segment ? applySegment(learned, res.segment) : learned;
     const updated: StoredUser = {
       ...user,
@@ -88,6 +89,6 @@ export class TaxEasyAgent {
       type: res.complete ? "onboarding_complete" : "message_out",
       data: { step: res.nextStep },
     });
-    return { text: res.reply, source: "static" };
+    return { text: res.reply, source: "static", lang: learned.language };
   }
 }

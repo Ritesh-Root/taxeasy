@@ -11,7 +11,8 @@
 import type { OnboardingStep, UserProfileData, UserModelData } from "../ports/types.ts";
 import { detectScheme, estimateTax } from "../engine/index.ts";
 import { proactiveInsights } from "./advisory.ts";
-import { DISCLAIMER } from "./router.ts";
+import { t } from "./i18n.ts";
+import type { Lang } from "./i18n.ts";
 
 export interface OnboardingResult {
   reply: string;
@@ -21,10 +22,10 @@ export interface OnboardingResult {
   complete: boolean;
 }
 
-export const WELCOME =
-  "👋 Welcome to TaxEasy — your tax & bills helper for FY2025-26.\n" +
-  "I'll set you up in 4 quick questions.\n\n" +
-  "1/4 — What's your work or business? (e.g. \"freelance developer\", \"kirana store\", \"doctor\")";
+/** Localized welcome (the agent picks the language from the first message). */
+export const welcome = (lang: Lang = "en") => t("onboard.welcome", lang);
+/** Back-compat default (English) for callers that don't pass a language. */
+export const WELCOME = welcome("en");
 
 /** Parse Indian-style amounts: "18,00,000", "18 lakh", "1.2 cr". */
 export function parseAmount(text: string): number | null {
@@ -52,21 +53,20 @@ export function handleOnboarding(
   step: OnboardingStep,
   message: string,
   profile: UserProfileData,
+  lang: Lang = "en",
 ): OnboardingResult {
   const msg = message.trim();
 
   switch (step) {
     case "profession": {
       if (!msg) {
-        return { reply: WELCOME, profilePatch: {}, nextStep: "profession", complete: false };
+        return { reply: t("onboard.welcome", lang), profilePatch: {}, nextStep: "profession", complete: false };
       }
       const scheme = detectScheme(msg);
       const segment = scheme === "44ADA" ? "professional" : "trader";
       const incomeType = scheme === "44ADA" ? "PROFESSION" : "BUSINESS";
       return {
-        reply:
-          `Got it — ${msg} (likely ${scheme} presumptive scheme).\n\n` +
-          "2/4 — Roughly, your yearly income / turnover? (e.g. \"18,00,000\" or \"18 lakh\")",
+        reply: t("onboard.profession_ack", lang, { work: msg, scheme }),
         profilePatch: { profession: msg, incomeType },
         segment,
         nextStep: "turnover",
@@ -77,17 +77,10 @@ export function handleOnboarding(
     case "turnover": {
       const amount = parseAmount(msg);
       if (amount == null || amount <= 0) {
-        return {
-          reply: "Please send your yearly amount as a number, e.g. \"1800000\" or \"18 lakh\".",
-          profilePatch: {},
-          nextStep: "turnover",
-          complete: false,
-        };
+        return { reply: t("onboard.turnover_reask", lang), profilePatch: {}, nextStep: "turnover", complete: false };
       }
       return {
-        reply:
-          `Noted ₹${amount.toLocaleString("en-IN")}/year.\n\n` +
-          "3/4 — Do you receive most payments digitally (UPI / bank) or in cash?",
+        reply: t("onboard.turnover_ack", lang, { amount: amount.toLocaleString("en-IN") }),
         profilePatch: { grossReceipts: amount },
         nextStep: "mode",
         complete: false,
@@ -97,10 +90,7 @@ export function handleOnboarding(
     case "mode": {
       const mostlyDigital = !/\bcash\b/i.test(msg);
       return {
-        reply:
-          (mostlyDigital ? "Great, mostly digital.\n\n" : "Okay, mostly cash.\n\n") +
-          "4/4 — Which data may I use to help you? Reply with any of: " +
-          "income, gst, bills, bank, notices — or \"all\". You can change this anytime.",
+        reply: t(mostlyDigital ? "onboard.mode_digital" : "onboard.mode_cash", lang),
         profilePatch: { mostlyDigital },
         nextStep: "consent",
         complete: false,
@@ -109,8 +99,9 @@ export function handleOnboarding(
 
     case "consent": {
       const consent = parseConsent(msg);
-      // Onboarding complete — give the first real value: a tax estimate.
       const merged: UserProfileData = { ...profile, consent };
+
+      // First real value: a localized tax estimate.
       let estimateLine = "";
       if (merged.profession && merged.grossReceipts != null) {
         const est = estimateTax({
@@ -119,23 +110,24 @@ export function handleOnboarding(
           incomeType: merged.incomeType ?? "PROFESSION",
           ...(merged.mostlyDigital != null ? { mostlyDigital: merged.mostlyDigital } : {}),
         });
-        estimateLine = est.presumptiveApplicable && est.tax
-          ? `\n\n📊 First estimate: ${est.presumptive.scheme}, presumptive income ` +
-            `₹${est.presumptive.presumptiveIncome.toLocaleString("en-IN")} → tax ` +
-            `₹${est.tax.total.toLocaleString("en-IN")} (new regime).` +
-            (est.tax.total === 0 ? " You're within the §87A rebate — ₹0 tax." : "")
-          : `\n\n⚠️ ${est.auditWarning}`;
+        if (est.presumptiveApplicable && est.tax) {
+          estimateLine = "\n\n" + t(est.tax.total === 0 ? "estimate.zero" : "estimate.nonzero", lang, {
+            scheme: est.presumptive.scheme,
+            income: est.presumptive.presumptiveIncome.toLocaleString("en-IN"),
+            tax: est.tax.total.toLocaleString("en-IN"),
+          });
+        }
       }
       const shared = Object.keys(consent).filter((k) => consent[k as keyof typeof consent]);
       // Proactive CA guidance — volunteer what matters before being asked.
-      const insights = proactiveInsights(merged);
+      const insights = proactiveInsights(merged, lang);
       const insightBlock = insights.length ? `\n\n${insights.join("\n")}` : "";
       return {
         reply:
-          `✅ You're all set! Sharing: ${shared.length ? shared.join(", ") : "nothing yet"}.` +
+          t("onboard.complete", lang, { shared: shared.length ? shared.join(", ") : "—" }) +
           estimateLine +
           insightBlock +
-          `\n\nAsk me anything — \"my tax?\", \"do I need GST?\", or send a bill photo.\n\n${DISCLAIMER}`,
+          `\n\n${t("onboard.ask_anything", lang)}\n\n${t("disclaimer", lang)}`,
         profilePatch: { consent },
         nextStep: "done",
         complete: true,

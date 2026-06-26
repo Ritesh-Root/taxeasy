@@ -10,15 +10,17 @@
  * and converses. Every calculation carries the statutory disclaimer.
  */
 import type { LlmClient } from "../ai/types.ts";
-import { estimateTax, advanceTaxDue } from "../engine/index.ts";
+import { estimateTax } from "../engine/index.ts";
 import type { IncomeType, Regime } from "../engine/types.ts";
 import { matchStaticAnswer } from "./static-answers.ts";
 import { gstRegistrationAnswer, presumptiveEligibilityAnswer } from "./advisory.ts";
+import { t } from "./i18n.ts";
+import type { Lang } from "./i18n.ts";
 import { logEvent } from "../observability/log.ts";
 
-export const DISCLAIMER =
-  "⚠️ Calculations use published CBDT/CBIC rules for FY2025-26. Verify before filing. " +
-  "TaxEasy is a calculation tool, not a CA firm.";
+/** Localized statutory disclaimer for the user's language. */
+export const DISCLAIMER = t("disclaimer", "en");
+export const disclaimer = (lang: Lang) => t("disclaimer", lang);
 
 export interface UserProfile {
   userId: string;
@@ -36,12 +38,16 @@ export type ReplySource = "static" | "engine" | "ai";
 export interface AgentReply {
   text: string;
   source: ReplySource;
+  /** Language the reply was rendered in (for verification + transcripts). */
+  lang?: Lang;
 }
 
 export interface RouterDeps {
   llm: LlmClient;
   /** Per-user adapted system prompt (from the user model). Falls back to default. */
   systemPrompt?: string;
+  /** The user's detected language — selects the i18n strings. */
+  lang?: Lang;
 }
 
 export const SYSTEM_PROMPT =
@@ -62,30 +68,31 @@ export async function route(
   deps: RouterDeps,
 ): Promise<AgentReply> {
   const text = message.trim();
+  const lang: Lang = deps.lang ?? "en";
   logEvent("message_in", { userId: profile.userId, chars: text.length });
 
   // 0) Engine-backed advisory (multilingual) — answer precisely from the profile
   //    instead of punting to generic AI (persona-sim finding).
   if (GST_REG_RX.test(text)) {
-    const ans = gstRegistrationAnswer(profile);
+    const ans = gstRegistrationAnswer(profile, lang);
     if (ans) {
       logEvent("engine_call", { userId: profile.userId, intent: "gst_registration" });
-      return { text: `${ans}\n\n${DISCLAIMER}`, source: "engine" };
+      return { text: `${ans}\n\n${disclaimer(lang)}`, source: "engine", lang };
     }
   }
   if (PRESUMPTIVE_RX.test(text)) {
-    const ans = presumptiveEligibilityAnswer(profile);
+    const ans = presumptiveEligibilityAnswer(profile, lang);
     if (ans) {
       logEvent("engine_call", { userId: profile.userId, intent: "presumptive_eligibility" });
-      return { text: `${ans}\n\n${DISCLAIMER}`, source: "engine" };
+      return { text: `${ans}\n\n${disclaimer(lang)}`, source: "engine", lang };
     }
   }
 
-  // 1) Static deterministic facts — no AI.
-  const staticAns = matchStaticAnswer(text);
-  if (staticAns) {
+  // 1) Static deterministic facts — no AI. Rendered in the user's language.
+  const staticKey = matchStaticAnswer(text);
+  if (staticKey) {
     logEvent("static_answer", { userId: profile.userId });
-    return { text: staticAns, source: "static" };
+    return { text: t(staticKey, lang), source: "static", lang };
   }
 
   // 2) Tax estimate — hard-coded engine, no AI math.
@@ -106,25 +113,24 @@ export async function route(
       });
       // Over the presumptive cap → withhold the (falsely low) number; guide instead.
       if (!est.presumptiveApplicable || est.tax === null) {
-        const reply = `⚠️ ${est.auditWarning}\n\n${DISCLAIMER}`;
+        const cap = presumptiveEligibilityAnswer(profile, lang) ?? "";
         logEvent("message_out", { userId: profile.userId, source: "engine" });
-        return { text: reply, source: "engine" };
+        return { text: `${cap}\n\n${disclaimer(lang)}`, source: "engine", lang };
       }
-      const reply =
-        `Scheme: ${est.presumptive.scheme} · presumptive income ₹${est.presumptive.presumptiveIncome.toLocaleString("en-IN")} ` +
-        `(${Math.round(est.presumptive.rateApplied * 100)}% of ₹${est.presumptive.grossReceipts.toLocaleString("en-IN")}).\n` +
-        `Estimated tax: ₹${est.tax.total.toLocaleString("en-IN")} (new regime).` +
-        (est.tax.total === 0 ? " You're within the §87A rebate — ₹0 tax." : "") +
-        `\n\n${DISCLAIMER}`;
+      const body = t("router.estimate", lang, {
+        scheme: est.presumptive.scheme,
+        income: est.presumptive.presumptiveIncome.toLocaleString("en-IN"),
+        rate: Math.round(est.presumptive.rateApplied * 100),
+        gross: est.presumptive.grossReceipts.toLocaleString("en-IN"),
+        tax: est.tax.total.toLocaleString("en-IN"),
+      });
+      const zero = est.tax.total === 0 ? t("note.zero_rebate", lang) : "";
       logEvent("message_out", { userId: profile.userId, source: "engine" });
-      return { text: reply, source: "engine" };
+      return { text: `${body}${zero}\n\n${disclaimer(lang)}`, source: "engine", lang };
     }
     // Profile incomplete → ask, still no AI needed.
-    const ask =
-      "To estimate your tax I need two things: (1) what you do (e.g. 'freelance developer', " +
-      "'kirana store'), and (2) your yearly gross receipts/turnover. Send both and I'll calculate.";
     logEvent("message_out", { userId: profile.userId, source: "static" });
-    return { text: ask, source: "static" };
+    return { text: t("router.estimate_incomplete", lang), source: "static", lang };
   }
 
   // 3) Conversational — Gemini (fast tier), with the per-user adapted prompt.
@@ -135,5 +141,5 @@ export async function route(
     temperature: 0.2,
   });
   logEvent("message_out", { userId: profile.userId, source: "ai", model: res.model });
-  return { text: res.text, source: "ai" };
+  return { text: res.text, source: "ai", lang };
 }
