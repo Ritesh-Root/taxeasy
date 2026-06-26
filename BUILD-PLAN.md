@@ -104,6 +104,15 @@ adapters. The **append-only event log is the source of truth**; all other state 
 Migration = `exportLog` → `replayInto` a fresh store → verify (tested: export→replay→byte-identical history).
 No provider can lock in your data. AI provider is likewise swappable (`LlmClient`).
 
+## 6b. Channel transport (decided, with guardrails)
+- **Interim:** **OpenWA** (self-hosted gateway) as the WhatsApp transport until the official Meta BSP is
+  approved. Built behind the `Channel` port (`src/channels/openwa.ts`) — OpenWA's code stays out of our
+  repo; we only call its REST API. Webhook HMAC verification + loop/group guards + idempotency enforced.
+- **Guardrails (non-negotiable):** use a **separate throwaway number** (a ban must not touch the future
+  official WABA); keep **Telegram as the zero-risk dev channel**; minimise sensitive data over OpenWA.
+- **Production target:** swap `OpenWaChannel` → official BSP adapter (Twilio/AiSensy/Wati). One file; the
+  agent, engine and runtime are unchanged. Tracked as release-blocking in `SECURITY.md`.
+
 ## 7. Never compromise
 1. The tax numbers are right (re-verify each 1 April after the Budget).
 2. The AI never does math — engine computes, Claude explains.
