@@ -32,8 +32,12 @@ Locked by your two converging plan reviews:
 - ✅ **Intent router + static answers** — `src/agent/`. Deterministic facts + tax math route around the AI
   (zero cost / zero 429); only real conversation hits Gemini. AI never produces a number.
 - ✅ **Execution logging** — `src/observability/log.ts` (JSON evidence trail for judging).
-- ✅ **21 tests pass** (`node --test`), incl. the TAX-04 §87A-on-net fix.
-- ⏳ Telegram loop (runnable) → WhatsApp swap → onboarding → bill vision → month-end bill → payments.
+- ✅ **Conversational onboarding** — `src/agent/onboarding.ts`. New user → profession (scheme detect) →
+  turnover → payment mode → DPDP consent → first estimate. Persisted; onboarded users route normally.
+- ✅ **Durable persistence** — `FileUserStore`/`FileEventStore` survive restarts (events.jsonl = portable log).
+- ✅ **Simulation suite + issues report** — 3 sims on real Kaggle data; fixed 5 issues (`ISSUES-AND-RISKS.md`).
+- ✅ **34 tests pass** (`node --test`), incl. the TAX-04 §87A-on-net fix + full onboarding flow.
+- ⏳ Bill capture (Gemini vision) → month-end tax bill → Razorpay → official-BSP swap → website.
 
 ## 2. Platform — DECIDED: Google-native (see hackathon banner above)
 Gemini + Firebase. Engine + AI wrapper were built model-agnostic, so this was a clean swap.

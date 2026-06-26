@@ -12,7 +12,8 @@ import type { LlmClient } from "../ai/types.ts";
 import type { EventStore, UserStore, StoredUser } from "../ports/types.ts";
 import { route, SYSTEM_PROMPT } from "./router.ts";
 import type { AgentReply, UserProfile } from "./router.ts";
-import { defaultModel, updateModel, adaptSystemPrompt } from "./user-model.ts";
+import { defaultModel, updateModel, adaptSystemPrompt, applySegment } from "./user-model.ts";
+import { WELCOME, handleOnboarding } from "./onboarding.ts";
 
 export interface AgentDeps {
   llm: LlmClient;
@@ -34,23 +35,59 @@ export class TaxEasyAgent {
 
   async handle(userId: string, message: string): Promise<AgentReply> {
     const user = await this.#loadOrCreate(userId);
-
-    // Learn from this message (language, verbosity, …).
-    const model = updateModel(user.model, message);
     await this.#deps.events.append({ userId, type: "message_in", data: { chars: message.length } });
 
-    // Adapt and route.
+    // New or mid-onboarding users go through the onboarding flow first.
+    if (!user.onboarding || !user.onboarding.complete) {
+      return this.#onboard(user, message);
+    }
+
+    // Onboarded → learn, adapt, route.
+    const model = updateModel(user.model, message);
     const profile: UserProfile = { userId, ...user.profile };
     const reply = await route(message, profile, {
       llm: this.#deps.llm,
       systemPrompt: adaptSystemPrompt(SYSTEM_PROMPT, model),
     });
 
-    // Persist updated state + record the outbound as an event (rebuildable history).
     const updated: StoredUser = { ...user, model, updatedAt: new Date().toISOString() };
     await this.#deps.users.put(updated);
     await this.#deps.events.append({ userId, type: "message_out", data: { source: reply.source } });
-
     return reply;
+  }
+
+  async #onboard(user: StoredUser, message: string): Promise<AgentReply> {
+    // Learn language/verbosity from onboarding messages too.
+    const learned = updateModel(user.model, message);
+
+    // First contact: greet and ask the first question (don't process the "hi").
+    if (!user.onboarding) {
+      const updated: StoredUser = {
+        ...user,
+        model: learned,
+        onboarding: { step: "profession", complete: false },
+        updatedAt: new Date().toISOString(),
+      };
+      await this.#deps.users.put(updated);
+      await this.#deps.events.append({ userId: user.userId, type: "message_out", data: { onboarding: "welcome" } });
+      return { text: WELCOME, source: "static" };
+    }
+
+    const res = handleOnboarding(user.onboarding.step, message, user.profile);
+    const model = res.segment ? applySegment(learned, res.segment) : learned;
+    const updated: StoredUser = {
+      ...user,
+      profile: { ...user.profile, ...res.profilePatch },
+      model,
+      onboarding: { step: res.nextStep, complete: res.complete },
+      updatedAt: new Date().toISOString(),
+    };
+    await this.#deps.users.put(updated);
+    await this.#deps.events.append({
+      userId: user.userId,
+      type: res.complete ? "onboarding_complete" : "message_out",
+      data: { step: res.nextStep },
+    });
+    return { text: res.reply, source: "static" };
   }
 }

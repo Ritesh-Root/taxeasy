@@ -40,11 +40,18 @@ export interface DocStore {
   get(key: string): Promise<{ bytes: Uint8Array; contentType: string } | null>;
 }
 
+export type OnboardingStep = "profession" | "turnover" | "mode" | "consent" | "done";
+export interface OnboardingState {
+  step: OnboardingStep;
+  complete: boolean;
+}
+
 /** Persisted user record = profile + the adaptive model (see user-model.ts). */
 export interface StoredUser {
   userId: string;
   profile: UserProfileData;
   model: UserModelData;
+  onboarding?: OnboardingState;
   updatedAt: string;
 }
 

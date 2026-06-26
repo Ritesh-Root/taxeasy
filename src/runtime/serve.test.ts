@@ -39,22 +39,29 @@ function makeAgent() {
 
 test("serve answers each message and dedupes repeated message ids", async () => {
   const ch = new FakeChannel([
-    { userId: "u1", text: "when is GSTR-3B due?", messageId: "m1" },
-    { userId: "u1", text: "when is GSTR-3B due?", messageId: "m1" }, // duplicate re-delivery
-    { userId: "u1", text: "hello there", messageId: "m2" },
+    { userId: "u1", text: "hi", messageId: "m1" },
+    { userId: "u1", text: "hi", messageId: "m1" }, // duplicate re-delivery
+    { userId: "u1", text: "freelance developer", messageId: "m2" },
   ]);
   await serve(ch, makeAgent());
 
-  // m1 answered once (dedupe), m2 answered once → 2 replies total.
+  // m1 answered once (dedupe) → welcome; m2 answered once → onboarding step 2.
   assert.equal(ch.sent.length, 2);
-  assert.match(ch.sent[0]?.text ?? "", /20th/); // static GST answer
+  assert.match(ch.sent[0]?.text ?? "", /Welcome/);
 });
 
 test("serve isolates errors — a failing turn still replies gracefully", async () => {
-  const ch = new FakeChannel([{ userId: "u9", text: "boom", messageId: "x1" }]);
+  // Seed an already-onboarded user so the message reaches the (failing) LLM.
+  const users = new InMemoryUserStore();
+  await users.put({
+    userId: "u9", profile: {}, updatedAt: "now",
+    onboarding: { step: "done", complete: true },
+    model: { language: "en", verbosity: "normal", techLevel: "medium", knownFacts: [], messageCount: 1 },
+  });
+  const ch = new FakeChannel([{ userId: "u9", text: "explain something", messageId: "x1" }]);
   const agent = new TaxEasyAgent({
     llm: new MockLlmClient(() => { throw new Error("model down"); }),
-    users: new InMemoryUserStore(),
+    users,
     events: new InMemoryEventStore(),
   });
   await serve(ch, agent);
