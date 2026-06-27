@@ -13,8 +13,10 @@ import type { EventStore, UserStore, StoredUser } from "../ports/types.ts";
 import { route, SYSTEM_PROMPT } from "./router.ts";
 import type { AgentReply, UserProfile } from "./router.ts";
 import { defaultModel, updateModel, adaptSystemPrompt, applySegment } from "./user-model.ts";
-import { welcome, handleOnboarding } from "./onboarding.ts";
+import { handleOnboarding } from "./onboarding.ts";
 import { consentedContext } from "./consent.ts";
+import { t } from "./i18n.ts";
+import { isSupportedRegion, getRegion } from "../regions/registry.ts";
 
 export interface AgentDeps {
   llm: LlmClient;
@@ -47,6 +49,18 @@ export class TaxEasyAgent {
       return this.#onboard(user, message);
     }
 
+    // Onboarded but in a region we don't yet support → waitlist mode (no tax math).
+    if (user.profile.region && !isSupportedRegion(user.profile.region)) {
+      const learnedW = updateModel(user.model, message);
+      await this.#deps.users.put({ ...user, model: learnedW, updatedAt: new Date().toISOString() });
+      const r = getRegion(user.profile.region);
+      return {
+        text: t("onboard.region_coming_soon", learnedW.language, { region: r.name }),
+        source: "static",
+        lang: learnedW.language,
+      };
+    }
+
     // Onboarded → learn, adapt, route in the user's language. The AI context is
     // built from consented data only (DPDP enforcement — see consent.ts).
     const model = updateModel(user.model, message);
@@ -67,17 +81,17 @@ export class TaxEasyAgent {
     // Learn language/verbosity from onboarding messages too.
     const learned = updateModel(user.model, message);
 
-    // First contact: greet and ask the first question (don't process the "hi").
+    // First contact: greet and ask for the region (don't process the "hi").
     if (!user.onboarding) {
       const updated: StoredUser = {
         ...user,
         model: learned,
-        onboarding: { step: "profession", complete: false },
+        onboarding: { step: "region", complete: false },
         updatedAt: new Date().toISOString(),
       };
       await this.#deps.users.put(updated);
-      await this.#deps.events.append({ userId: user.userId, type: "message_out", data: { onboarding: "welcome" } });
-      return { text: welcome(learned.language), source: "static", lang: learned.language };
+      await this.#deps.events.append({ userId: user.userId, type: "message_out", data: { onboarding: "region_prompt" } });
+      return { text: t("onboard.region_prompt", learned.language), source: "static", lang: learned.language };
     }
 
     const res = handleOnboarding(user.onboarding.step, message, user.profile, learned.language);

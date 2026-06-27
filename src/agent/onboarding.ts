@@ -12,6 +12,7 @@ import type { OnboardingStep, UserProfileData, UserModelData } from "../ports/ty
 import { detectScheme, estimateTax } from "../engine/index.ts";
 import { proactiveInsights } from "./advisory.ts";
 import { sanitizeText } from "./sanitize.ts";
+import { matchRegion } from "../regions/registry.ts";
 import { t } from "./i18n.ts";
 import type { Lang } from "./i18n.ts";
 
@@ -63,6 +64,29 @@ export function handleOnboarding(
   const msg = message.trim();
 
   switch (step) {
+    case "region": {
+      const region = matchRegion(msg);
+      if (!region) {
+        return { reply: t("onboard.region_reask", lang), profilePatch: {}, nextStep: "region", complete: false };
+      }
+      if (!region.supported) {
+        // Legal safety: we don't run a tax engine we haven't built — waitlist them.
+        return {
+          reply: t("onboard.region_coming_soon", lang, { region: region.name }),
+          profilePatch: { region: region.code },
+          nextStep: "done",
+          complete: true,
+        };
+      }
+      // Supported region (India) → continue to the normal flow.
+      return {
+        reply: t("onboard.welcome", lang),
+        profilePatch: { region: region.code },
+        nextStep: "profession",
+        complete: false,
+      };
+    }
+
     case "profession": {
       // Sanitize: profession is free text that later reaches the AI context, so
       // strip newlines/control chars and cap length (stored prompt-injection defense).

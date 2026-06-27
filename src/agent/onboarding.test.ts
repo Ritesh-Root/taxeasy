@@ -29,7 +29,8 @@ test("full onboarding flow → profile captured, first estimate, then normal rou
   const u = "wa-919999";
 
   const r0 = await agent.handle(u, "hi");
-  assert.match(r0.text, /Welcome/);
+  assert.match(r0.text, /Welcome/); // region prompt
+  await agent.handle(u, "India"); // region → supported
 
   const r1 = await agent.handle(u, "freelance software developer");
   assert.match(r1.text, /44ADA/); // detected professional scheme
@@ -48,6 +49,7 @@ test("full onboarding flow → profile captured, first estimate, then normal rou
   // Profile persisted correctly.
   const stored = await users.get(u);
   assert.equal(stored?.onboarding?.complete, true);
+  assert.equal(stored?.profile.region, "IN");
   assert.equal(stored?.profile.grossReceipts, 1_800_000);
   assert.equal(stored?.profile.incomeType, "PROFESSION");
   assert.equal(stored?.profile.consent?.income, true);
@@ -71,6 +73,7 @@ test("kirana store onboarding → 44AD trader segment", async () => {
   const agent = new TaxEasyAgent({ llm: new MockLlmClient(), users, events: new InMemoryEventStore() });
   const u = "wa-918888";
   await agent.handle(u, "namaste");
+  await agent.handle(u, "India"); // region step
   const r = await agent.handle(u, "kirana store");
   assert.match(r.text, /44AD\b/);
   await agent.handle(u, "60 lakh");

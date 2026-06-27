@@ -30,7 +30,8 @@ test("Hindi (Devanagari) user is onboarded in Hindi", async () => {
   const u = "hi-user";
   const r0 = await agent.handle(u, "नमस्ते");
   assert.equal(r0.lang, "hi");
-  assert.match(r0.text, DEVANAGARI); // welcome in Hindi
+  assert.match(r0.text, DEVANAGARI); // region prompt in Hindi
+  await agent.handle(u, "भारत"); // region → India (supported)
   const r1 = await agent.handle(u, "किराना दुकान");
   assert.match(r1.text, DEVANAGARI);
   assert.match(r1.text, /44AD\b/); // numbers/scheme codes stay as-is

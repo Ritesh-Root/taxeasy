@@ -39,6 +39,16 @@ Locked by your two converging plan reviews:
 - ✅ **34 tests pass** (`node --test`), incl. the TAX-04 §87A-on-net fix + full onboarding flow.
 - ⏳ Bill capture (Gemini vision) → month-end tax bill → Razorpay → official-BSP swap → website.
 
+## 1a. International (region-based) — NEW direction
+TaxEasy is global: at onboarding the user **picks their region** and the agent customizes to it
+(language, currency, tax engine). Implemented in `src/regions/registry.ts` + a region-first onboarding step.
+- **Legal safety:** we only emit tax *numbers* for a region whose engine is implemented + verified
+  (`supported: true`). **India is the launch region (live).** US/UK/UAE/CA/SG/AU are registered but
+  **"coming soon"** — those users are waitlisted and the agent never computes tax it can't stand behind.
+- **Per-region work to make a region live:** correct tax rules (own `tax-rules`), currency formatting
+  (`formatMoney`), local languages, deadlines/compliance. One region at a time, each CA-reviewed.
+- Currency stays ₹ (India) until a second engine lands; then i18n money is parameterized via `formatMoney`.
+
 ## 2. Platform — DECIDED: Google-native (see hackathon banner above)
 Gemini + Firebase. Engine + AI wrapper were built model-agnostic, so this was a clean swap.
 

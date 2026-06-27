@@ -16,6 +16,21 @@ type Catalog = Record<string, Record<Lang, string>>;
 
 /** All strings. Keep {placeholders} identical across languages. */
 const CATALOG: Catalog = {
+  "onboard.region_prompt": {
+    en: "👋 Welcome to TaxEasy — your AI tax & bills assistant. First, which country are you in? (e.g. India, USA, UK, UAE, Canada, Singapore, Australia)",
+    hi: "👋 TaxEasy में आपका स्वागत है — आपका AI टैक्स और बिल सहायक। सबसे पहले, आप किस देश में हैं? (जैसे India, USA, UK, UAE)",
+    hinglish: "👋 TaxEasy me aapka swagat hai — aapka AI tax & bills assistant. Sabse pehle, aap kis country me ho? (jaise India, USA, UK, UAE)",
+  },
+  "onboard.region_reask": {
+    en: "Please tell me your country — e.g. India, USA, UK, UAE, Canada, Singapore, Australia.",
+    hi: "कृपया अपना देश बताएँ — जैसे India, USA, UK, UAE, Canada, Singapore, Australia।",
+    hinglish: "Apna country batao — jaise India, USA, UK, UAE, Canada, Singapore, Australia.",
+  },
+  "onboard.region_coming_soon": {
+    en: "🌍 TaxEasy isn't live in {region} yet — but you're on the early-access list! I'll message you the moment we launch there. Meanwhile, ask me anything general about running your business.",
+    hi: "🌍 TaxEasy अभी {region} में उपलब्ध नहीं है — पर आप अर्ली-एक्सेस लिस्ट में हैं! जैसे ही हम वहाँ लॉन्च करेंगे, मैं आपको बता दूँगा। तब तक, अपने बिज़नेस के बारे में कुछ भी सामान्य पूछ सकते हैं।",
+    hinglish: "🌍 TaxEasy abhi {region} me live nahi hai — par aap early-access list me ho! Jaise hi wahan launch karenge, main bata dunga. Tab tak, apne business ke baare me kuch bhi general pooch sakte ho.",
+  },
   "onboard.welcome": {
     en: "👋 Welcome to TaxEasy — your tax & bills helper for FY2025-26.\nI'll set you up in 4 quick questions.\n\n1/4 — What's your work or business? (e.g. \"freelance developer\", \"kirana store\", \"doctor\")",
     hi: "👋 TaxEasy में आपका स्वागत है — FY2025-26 के लिए आपका टैक्स और बिल सहायक।\nमैं 4 छोटे सवालों में आपको सेट कर दूँगा।\n\n1/4 — आप क्या काम/व्यापार करते हैं? (जैसे \"फ्रीलांस डेवलपर\", \"किराना दुकान\", \"डॉक्टर\")",
