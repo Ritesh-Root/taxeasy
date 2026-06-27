@@ -31,26 +31,32 @@ export async function serve(
   const limiter = new RateLimiter(opts.ratePerMinute ?? 20, 60_000);
 
   await channel.start(async (msg: InboundMessage) => {
-    if (msg.messageId) {
-      if (seen.has(msg.messageId)) {
-        logEvent("message_in", { userId: msg.userId, channel: channel.name, dedup: true });
+    // Namespace identity by platform so the same raw id on two channels (e.g.
+    // Telegram "12345" vs WhatsApp "12345") never share state. The channel.send
+    // call still uses the RAW transport id.
+    const userKey = `${channel.name}:${msg.userId}`;
+    const dedupeKey = msg.messageId ? `${channel.name}:${msg.messageId}` : "";
+
+    if (dedupeKey) {
+      if (seen.has(dedupeKey)) {
+        logEvent("message_in", { userId: userKey, channel: channel.name, dedup: true });
         return;
       }
-      seen.add(msg.messageId);
+      seen.add(dedupeKey);
       if (seen.size > dedupeMax) seen.clear();
     }
 
     // Per-user rate limit — drop floods silently (don't amplify by replying).
-    if (!limiter.allow(msg.userId)) {
-      logEvent("message_in", { userId: msg.userId, channel: channel.name, throttled: true });
+    if (!limiter.allow(userKey)) {
+      logEvent("message_in", { userId: userKey, channel: channel.name, throttled: true });
       return;
     }
 
     try {
-      const reply = await agent.handle(msg.userId, msg.text);
+      const reply = await agent.handle(userKey, msg.text);
       await channel.send(msg.userId, reply.text);
     } catch (err) {
-      logEvent("ai_error", { userId: msg.userId, channel: channel.name, message: String(err) });
+      logEvent("ai_error", { userId: userKey, channel: channel.name, message: String(err) });
       await channel.send(msg.userId, "Sorry — something went wrong on my end. Please try again in a moment.");
     }
   });

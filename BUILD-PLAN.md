@@ -118,6 +118,14 @@ adapters. The **append-only event log is the source of truth**; all other state 
 Migration = `exportLog` → `replayInto` a fresh store → verify (tested: export→replay→byte-identical history).
 No provider can lock in your data. AI provider is likewise swappable (`LlmClient`).
 
+## 6c. Multi-platform (users choose their app)
+The `Channel` port makes the transport swappable, so TaxEasy runs on **many messaging apps at once** —
+the user picks whichever they're comfortable with. **Telegram** (`src/channels/telegram.ts`, official Bot
+API, zero approval) and **WhatsApp** (OpenWA interim) are implemented; `bot/multi.ts` + `serveAll` start
+every configured channel against one agent. `serve()` **namespaces user state per platform**
+(`telegram:<id>` vs `whatsapp:<id>`) so identities never collide. New platform = one adapter + one line
+(Signal, Messenger, Instagram DM, Discord, SMS/Twilio, …).
+
 ## 6b. Channel transport (decided, with guardrails)
 - **Interim:** **OpenWA** (self-hosted gateway) as the WhatsApp transport until the official Meta BSP is
   approved. Built behind the `Channel` port (`src/channels/openwa.ts`) — OpenWA's code stays out of our

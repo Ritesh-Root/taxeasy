@@ -52,9 +52,10 @@ test("serve answers each message and dedupes repeated message ids", async () => 
 
 test("serve isolates errors — a failing turn still replies gracefully", async () => {
   // Seed an already-onboarded user so the message reaches the (failing) LLM.
+  // serve() namespaces the id by channel name ("fake:u9").
   const users = new InMemoryUserStore();
   await users.put({
-    userId: "u9", profile: {}, updatedAt: "now",
+    userId: "fake:u9", profile: {}, updatedAt: "now",
     onboarding: { step: "done", complete: true },
     model: { language: "en", verbosity: "normal", techLevel: "medium", knownFacts: [], messageCount: 1 },
   });

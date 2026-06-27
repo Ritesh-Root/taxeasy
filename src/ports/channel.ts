@@ -1,8 +1,13 @@
 /**
  * Channel port — the messaging transport is a swappable adapter, exactly like
- * storage and AI. Telegram (dev), official WhatsApp Cloud API via a BSP (prod),
- * or a console all implement this same interface, so the agent never knows or
- * cares which transport it is speaking over.
+ * storage and AI. Users pick whichever platform they're comfortable with; every
+ * platform implements this one interface, so the agent is identical across them.
+ *
+ * Implemented: Telegram (`telegram.ts`), WhatsApp via OpenWA (`openwa.ts`).
+ * Add a platform (Signal, Messenger, Instagram DM, Discord, SMS/Twilio, …) by
+ * writing one adapter implementing this interface + one line in `bot/multi.ts`.
+ * Run them all together via `serveAll` — `serve()` namespaces user state per
+ * platform so identities never collide.
  *
  * NOTE: production WhatsApp must be an OFFICIAL Meta Cloud API adapter (Twilio /
  * AiSensy / Wati). Reverse-engineered libraries (Baileys / whatsapp-web.js /
