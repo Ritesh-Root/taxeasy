@@ -26,12 +26,16 @@ export interface EventStore {
   all(): Promise<DomainEvent[]>;
   /** Bulk load (used when replaying an exported log into a fresh store). */
   load(events: DomainEvent[]): Promise<void>;
+  /** DPDP erasure: remove every event of one user. */
+  deleteUser(userId: string): Promise<void>;
 }
 
 export interface UserStore {
   get(userId: string): Promise<StoredUser | null>;
   put(user: StoredUser): Promise<void>;
   all(): Promise<StoredUser[]>;
+  /** DPDP erasure: remove the user's record. */
+  delete(userId: string): Promise<void>;
 }
 
 /** Opaque binary store for bills/PDFs (Firebase Storage / S3 / GCS adapter). */

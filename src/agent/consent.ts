@@ -33,6 +33,42 @@ export function consentedContext(p: UserProfileData): string {
   return parts.length ? ` User context (shared with consent): ${parts.join("; ")}.` : "";
 }
 
+export const CATEGORIES = ["income", "gst", "bank", "bills", "notices"] as const;
+export type Category = (typeof CATEGORIES)[number];
+
+export type ConsentCommand =
+  | { kind: "status" }
+  | { kind: "share" | "stop"; categories: Category[] };
+
+/** "MY DATA" · "SHARE bills, gst" · "STOP SHARING income" · either with "all". */
+export function parseConsentCommand(text: string): ConsentCommand | null {
+  const s = text.trim().toLowerCase();
+  if (/^(my data|mera data|मेरा डेटा)$/.test(s)) return { kind: "status" };
+  const m = s.match(/^(stop sharing|share)\s+(.+)$/);
+  if (!m) return null;
+  const categories = /\ball\b/.test(m[2]!) ? [...CATEGORIES] : CATEGORIES.filter((c) => m[2]!.includes(c));
+  return categories.length ? { kind: m[1] === "share" ? "share" : "stop", categories } : null;
+}
+
+/** Stored fields per category. Withdrawing consent deletes them (privacy policy §2). */
+const STORED: Partial<Record<Category, (keyof UserProfileData)[]>> = { income: ["grossReceipts"] };
+
+export function applyConsentChange(
+  p: UserProfileData,
+  cmd: { kind: "share" | "stop"; categories: Category[] },
+): UserProfileData {
+  const next: UserProfileData = { ...p, consent: { ...p.consent } };
+  for (const c of cmd.categories) {
+    next.consent![c] = cmd.kind === "share";
+    if (cmd.kind === "stop") for (const f of STORED[c] ?? []) delete next[f];
+  }
+  return next;
+}
+
+/** One line per category: "✅ income", "❌ bank", … */
+export const consentSummary = (p: UserProfileData) =>
+  CATEGORIES.map((c) => `${p.consent?.[c] ? "✅" : "❌"} ${c}`).join("\n");
+
 /**
  * Strip a category-keyed payload down to consented categories. Use this whenever
  * structured user data (e.g. parsed bills) is about to be sent to the AI.

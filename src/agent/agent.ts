@@ -15,6 +15,7 @@ import type { AgentReply, UserProfile } from "./router.ts";
 import { defaultModel, updateModel, adaptSystemPrompt, applySegment } from "./user-model.ts";
 import { handleOnboarding } from "./onboarding.ts";
 import { consentedContext } from "./consent.ts";
+import { runCommand } from "./commands.ts";
 import { t } from "./i18n.ts";
 import { isSupportedRegion, getRegion } from "../regions/registry.ts";
 
@@ -22,10 +23,18 @@ export interface AgentDeps {
   llm: LlmClient;
   users: UserStore;
   events: EventStore;
+  /** Clock (injectable for tests). */
+  now?: () => Date;
 }
 
 /** Hard cap on inbound message length (cost/DoS guard, review #6). */
 const MAX_MESSAGE_LEN = 4000;
+
+/** A new session = first message after a day of silence; it opens with the AI notice (Anthropic AUP). */
+const SESSION_GAP_MS = 24 * 60 * 60 * 1000;
+
+/** DPDP erasure request, in English, Hinglish or Hindi. */
+const DELETE_RX = /^\s*(delete my data|mera data delete karo|मेरा डेटा (डिलीट|हटा|मिटा)\s*(करो|दो|दें)?)\s*[.!।]*\s*$/i;
 
 export class TaxEasyAgent {
   #deps: AgentDeps;
@@ -42,6 +51,15 @@ export class TaxEasyAgent {
   async handle(userId: string, message: string): Promise<AgentReply> {
     message = message.slice(0, MAX_MESSAGE_LEN); // cap before any regex/AI work (cost/DoS guard)
     const user = await this.#loadOrCreate(userId);
+
+    // Erase on request, before anything about this message is stored.
+    if (DELETE_RX.test(message)) {
+      const lang = updateModel(user.model, message).language;
+      await this.#deps.users.delete(userId);
+      await this.#deps.events.deleteUser(userId);
+      return { text: t("data.deleted", lang), source: "static", lang };
+    }
+
     await this.#deps.events.append({ userId, type: "message_in", data: { chars: message.length } });
 
     // New or mid-onboarding users go through the onboarding flow first.
@@ -64,6 +82,18 @@ export class TaxEasyAgent {
     // Onboarded → learn, adapt, route in the user's language. The AI context is
     // built from consented data only (DPDP enforcement — see consent.ts).
     const model = updateModel(user.model, message);
+    const now = (this.#deps.now ?? (() => new Date()))();
+    const newSession = now.getTime() - Date.parse(user.updatedAt) >= SESSION_GAP_MS;
+    const withNotice = (r: AgentReply): AgentReply =>
+      newSession ? { ...r, text: `${t("notice.ai_session", model.language)}\n\n${r.text}` } : r;
+
+    const cmd = await runCommand(user, message, model.language);
+    if (cmd) {
+      await this.#deps.users.put({ ...cmd.user, model, updatedAt: new Date().toISOString() });
+      await this.#deps.events.append({ userId, type: "message_out", data: { source: "command" } });
+      return withNotice({ text: cmd.text, source: "static", lang: model.language });
+    }
+
     const profile: UserProfile = { userId, ...user.profile };
     const reply = await route(message, profile, {
       llm: this.#deps.llm,
@@ -74,7 +104,7 @@ export class TaxEasyAgent {
     const updated: StoredUser = { ...user, model, updatedAt: new Date().toISOString() };
     await this.#deps.users.put(updated);
     await this.#deps.events.append({ userId, type: "message_out", data: { source: reply.source } });
-    return reply;
+    return withNotice(reply);
   }
 
   async #onboard(user: StoredUser, message: string): Promise<AgentReply> {

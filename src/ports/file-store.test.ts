@@ -54,3 +54,23 @@ test("file store: unknown user is null; put/get round-trips", async () => {
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("file store: deleteUser / delete erase one user and keep everyone else", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "taxeasy-"));
+  try {
+    const users = new FileUserStore(dir);
+    const events = new FileEventStore(dir);
+    for (const id of ["a", "b"]) {
+      await users.put({ userId: id, profile: {}, model: defaultModel(), updatedAt: "now" });
+      await events.append({ userId: id, type: "message_in", data: {} });
+    }
+    await Promise.all([events.deleteUser("a"), events.append({ userId: "b", type: "message_out", data: {} })]);
+    await users.delete("a");
+
+    assert.equal(await users.get("a"), null);
+    assert.ok(await users.get("b"));
+    assert.deepEqual((await events.all()).map((e) => e.userId), ["b", "b"]); // concurrent append not lost
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

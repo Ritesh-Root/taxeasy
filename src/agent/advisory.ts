@@ -4,7 +4,7 @@
  * Hinglish owner gets real guidance, not English prose.
  */
 import type { UserProfileData } from "../ports/types.ts";
-import { estimateTax, gstRegistrationRequired, advanceTaxDue } from "../engine/index.ts";
+import { estimateTax, gstRegistrationRequired, advanceTaxDue, incomeTax } from "../engine/index.ts";
 import { t } from "./i18n.ts";
 import type { Lang } from "./i18n.ts";
 
@@ -102,6 +102,46 @@ export function reassuranceAnswer(lang: Lang = "en"): string {
 /** GST output−input netting explainer for traders (S4) — formula + offer to compute. */
 export function gstLiabilityAnswer(lang: Lang = "en"): string {
   return t("advisory.gst_liability", lang);
+}
+
+/**
+ * Old vs new regime on the user's presumptive income, with the math shown.
+ * Deductions (80C, 80D, …) only count in the old regime. Null when the profile
+ * is incomplete or presumptive taxation doesn't apply (caller explains why).
+ */
+export function regimeComparisonAnswer(p: UserProfileData, deductions: number, lang: Lang = "en"): string | null {
+  if (p.grossReceipts == null || !p.profession) return null;
+  const est = estimateTax({
+    profession: p.profession,
+    grossReceipts: p.grossReceipts,
+    incomeType: p.incomeType ?? "PROFESSION",
+    ...(p.mostlyDigital != null ? { mostlyDigital: p.mostlyDigital } : {}),
+  });
+  if (!est.presumptiveApplicable) return null;
+  const income = est.presumptive.presumptiveIncome;
+  const oldTaxable = Math.max(0, income - deductions);
+  const newTax = incomeTax(income, "new").total;
+  const oldTax = incomeTax(oldTaxable, "old").total;
+  const lines = [
+    t("regime.compare", lang, {
+      scheme: est.presumptive.scheme,
+      income: inr(income),
+      newTax: inr(newTax),
+      ded: inr(deductions),
+      oldTaxable: inr(oldTaxable),
+      oldTax: inr(oldTax),
+    }),
+    newTax === oldTax
+      ? t("regime.same", lang)
+      : t("regime.saves", lang, { regime: t(newTax < oldTax ? "regime.new" : "regime.old", lang), saving: inr(Math.abs(newTax - oldTax)) }),
+  ];
+  if (!deductions) lines.push(t("regime.tip", lang));
+  return lines.join("\n");
+}
+
+/** Output GST on a stated sales amount (default 18%), due date, and the ITC note. */
+export function gstOnSalesAnswer(sales: number, ratePct: number, lang: Lang = "en"): string {
+  return t("gst.on_sales", lang, { sales: inr(sales), rate: ratePct, gst: inr(Math.round((sales * ratePct) / 100)) });
 }
 
 /**

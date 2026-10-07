@@ -7,7 +7,7 @@
  * cloud-agnostic event log from the zero-loss-migration design. Copy it anywhere
  * and `replayInto` a different store.
  */
-import { appendFile, readFile, writeFile, mkdir, rename, readdir } from "node:fs/promises";
+import { appendFile, readFile, writeFile, mkdir, rename, readdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
 import type { DomainEvent, EventStore, StoredUser, UserStore } from "./types.ts";
@@ -22,15 +22,24 @@ async function ensureDir(dir: string): Promise<void> {
 export class FileEventStore implements EventStore {
   #file: string;
   #ready: Promise<void>;
+  #queue: Promise<unknown> = Promise.resolve();
   constructor(dir: string) {
     this.#file = join(dir, "events.jsonl");
     this.#ready = ensureDir(dir);
   }
+  /** Run writes one at a time, so a rewrite (deleteUser) can't drop a concurrent append. */
+  #serial<T>(fn: () => Promise<T>): Promise<T> {
+    const run = this.#queue.then(fn, fn);
+    this.#queue = run.catch(() => {});
+    return run;
+  }
   async append(e: Omit<DomainEvent, "id" | "ts">): Promise<DomainEvent> {
-    await this.#ready;
-    const event: DomainEvent = { ...e, id: nextId(), ts: new Date().toISOString() };
-    await appendFile(this.#file, JSON.stringify(event) + "\n");
-    return event;
+    return this.#serial(async () => {
+      await this.#ready;
+      const event: DomainEvent = { ...e, id: nextId(), ts: new Date().toISOString() };
+      await appendFile(this.#file, JSON.stringify(event) + "\n");
+      return event;
+    });
   }
   async #read(): Promise<DomainEvent[]> {
     await this.#ready;
@@ -49,8 +58,18 @@ export class FileEventStore implements EventStore {
     return this.#read();
   }
   async load(events: DomainEvent[]): Promise<void> {
-    await this.#ready;
-    await appendFile(this.#file, events.map((e) => JSON.stringify(e)).join("\n") + (events.length ? "\n" : ""));
+    await this.#serial(async () => {
+      await this.#ready;
+      await appendFile(this.#file, events.map((e) => JSON.stringify(e)).join("\n") + (events.length ? "\n" : ""));
+    });
+  }
+  async deleteUser(userId: string): Promise<void> {
+    await this.#serial(async () => {
+      const kept = (await this.#read()).filter((e) => e.userId !== userId);
+      const tmp = `${this.#file}.${process.pid}.tmp`;
+      await writeFile(tmp, kept.map((e) => JSON.stringify(e) + "\n").join(""));
+      await rename(tmp, this.#file);
+    });
   }
 }
 
@@ -102,5 +121,9 @@ export class FileUserStore implements UserStore {
       }
     }
     return out;
+  }
+  async delete(userId: string): Promise<void> {
+    await this.#ready;
+    await rm(this.#path(userId), { force: true });
   }
 }

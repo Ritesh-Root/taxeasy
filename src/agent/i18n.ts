@@ -245,6 +245,67 @@ const CATALOG: Catalog = {
     hi: "मैं सिर्फ़ आपके टैक्स, GST और बिल में मदद के लिए हूँ — उसी पर चलते हैं। किसमें मदद चाहिए?",
     hinglish: "Main sirf aapke tax, GST aur bills me madad ke liye hoon — usi par chalte hain. Kis cheez me madad chahiye?",
   },
+
+  // ---- Trust: AI notice, erasure, consent ----
+  "notice.ai_session": {
+    en: "🤖 Welcome back! Quick reminder: you're chatting with TaxEasy's AI assistant, not a person. Tax figures come from our rules engine — please verify before you file.",
+    hi: "🤖 फिर से स्वागत है! याद दिला दूँ: आप TaxEasy के AI सहायक से बात कर रहे हैं, किसी इंसान से नहीं। टैक्स के आँकड़े हमारे नियम-आधारित इंजन से आते हैं — फ़ाइल करने से पहले जाँच लें।",
+    hinglish: "🤖 Welcome back! Yaad dila dun: aap TaxEasy ke AI assistant se baat kar rahe ho, kisi insaan se nahi. Tax ke numbers hamare rules engine se aate hain — file karne se pehle check kar lena.",
+  },
+  "data.deleted": {
+    en: "🗑️ Done — I've deleted your TaxEasy profile and message history. If you message again, we'll start fresh.",
+    hi: "🗑️ हो गया — मैंने आपकी TaxEasy प्रोफ़ाइल और मैसेज हिस्ट्री मिटा दी है। दोबारा मैसेज करेंगे तो नए सिरे से शुरू करेंगे।",
+    hinglish: "🗑️ Ho gaya — maine aapki TaxEasy profile aur message history delete kar di hai. Dobara message karoge to fresh start karenge.",
+  },
+  "consent.status": {
+    en: "🔐 What I may use to help you:\n{list}\n\nChange it anytime — e.g. \"SHARE bills\" or \"STOP SHARING income\" (or \"all\").",
+    hi: "🔐 आपकी मदद के लिए मैं यह डेटा इस्तेमाल कर सकता हूँ:\n{list}\n\nकभी भी बदलें — जैसे \"SHARE bills\" या \"STOP SHARING income\" (या \"all\")।",
+    hinglish: "🔐 Aapki help ke liye main ye data use kar sakta hoon:\n{list}\n\nKabhi bhi badlo — jaise \"SHARE bills\" ya \"STOP SHARING income\" (ya \"all\").",
+  },
+  "consent.updated": {
+    en: "✅ Updated. What I may use now:\n{list}\n\nTurning a category off also deletes what I stored for it.",
+    hi: "✅ अपडेट हो गया। अब मैं यह इस्तेमाल कर सकता हूँ:\n{list}\n\nकोई श्रेणी बंद करने पर उसका सेव किया डेटा भी मिट जाता है।",
+    hinglish: "✅ Update ho gaya. Ab main ye use kar sakta hoon:\n{list}\n\nKoi category band karne par uska saved data bhi delete ho jaata hai.",
+  },
+  "consent.turnover_hint": {
+    en: "I no longer have your turnover — send e.g. \"TURNOVER 18 lakh\" to add it back.",
+    hi: "आपका टर्नओवर अब मेरे पास नहीं है — वापस जोड़ने के लिए भेजें, जैसे \"TURNOVER 18 लाख\"।",
+    hinglish: "Aapka turnover ab mere paas nahi hai — wapas add karne ke liye bhejo, jaise \"TURNOVER 18 lakh\".",
+  },
+  "profile.turnover_set": {
+    en: "Noted ₹{amount}/year. Ask \"how much tax?\" for a fresh estimate.",
+    hi: "नोट किया ₹{amount}/साल। नया अनुमान चाहिए तो पूछें \"kitna tax?\"",
+    hinglish: "Note kiya ₹{amount}/saal. Naya estimate chahiye to poocho \"kitna tax?\"",
+  },
+
+  // ---- Advisory: regime comparison, GST on sales ----
+  "regime.compare": {
+    en: "🧮 Old vs new regime (FY2025-26) on your {scheme} income of ₹{income}:\n• New regime: tax ₹{newTax}\n• Old regime: ₹{income} − ₹{ded} deductions = ₹{oldTaxable} taxable → tax ₹{oldTax}",
+    hi: "🧮 पुरानी बनाम नई व्यवस्था (FY2025-26), आपकी {scheme} आय ₹{income} पर:\n• नई व्यवस्था: टैक्स ₹{newTax}\n• पुरानी व्यवस्था: ₹{income} − ₹{ded} छूट = ₹{oldTaxable} कर-योग्य → टैक्स ₹{oldTax}",
+    hinglish: "🧮 Old vs new regime (FY2025-26), aapki {scheme} income ₹{income} par:\n• New regime: tax ₹{newTax}\n• Old regime: ₹{income} − ₹{ded} deductions = ₹{oldTaxable} taxable → tax ₹{oldTax}",
+  },
+  "regime.saves": {
+    en: "👉 The {regime} regime saves you ₹{saving}.",
+    hi: "👉 {regime} व्यवस्था से आपके ₹{saving} बचते हैं।",
+    hinglish: "👉 {regime} regime se aapke ₹{saving} bachte hain.",
+  },
+  "regime.same": {
+    en: "👉 Both regimes cost the same here.",
+    hi: "👉 यहाँ दोनों व्यवस्थाओं में टैक्स बराबर है।",
+    hinglish: "👉 Yahan dono regime me tax barabar hai.",
+  },
+  "regime.new": { en: "new", hi: "नई", hinglish: "new" },
+  "regime.old": { en: "old", hi: "पुरानी", hinglish: "old" },
+  "regime.tip": {
+    en: "Have 80C/80D or other deductions? Send e.g. \"old vs new with 1.5 lakh deductions\" for an exact comparison.",
+    hi: "80C/80D या दूसरी छूट हैं? सटीक तुलना के लिए भेजें, जैसे \"old vs new 1.5 लाख deductions\"।",
+    hinglish: "80C/80D ya koi aur deductions hain? Exact comparison ke liye bhejo, jaise \"old vs new with 1.5 lakh deductions\".",
+  },
+  "gst.on_sales": {
+    en: "🧾 GST on sales of ₹{sales} at {rate}%: ₹{gst}.\nDue by the 20th of next month (GSTR-3B, monthly filers). Input credit on your business purchases can bring this down — send your purchase bills and I'll net them off.",
+    hi: "🧾 ₹{sales} की बिक्री पर {rate}% GST: ₹{gst}।\nअगले महीने की 20 तारीख तक (GSTR-3B, मासिक फ़ाइलिंग)। बिज़नेस ख़रीद का इनपुट क्रेडिट इसे कम कर सकता है — ख़रीद के बिल भेजें, मैं घटा दूँगा।",
+    hinglish: "🧾 ₹{sales} ki sale par {rate}% GST: ₹{gst}.\nAgle mahine ki 20 tareekh tak (GSTR-3B, monthly filers). Business purchases ka input credit isse kam kar sakta hai — purchase bills bhejo, main net kar dunga.",
+  },
 };
 
 /** Render a catalog key in the given language with {var} substitution. */

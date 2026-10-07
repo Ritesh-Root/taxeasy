@@ -54,3 +54,26 @@ test("agent DOES send consented turnover to the LLM", async () => {
   await agent.handle("u2", "explain presumptive taxation simply");
   assert.match(llm.calls[0]!.system, /40,00,000/);
 });
+
+test("MY DATA shows consent; STOP SHARING income turns it off AND deletes stored turnover", async () => {
+  const users = new InMemoryUserStore();
+  await users.put({
+    userId: "u", updatedAt: "now", model: defaultModel(),
+    onboarding: { step: "done", complete: true },
+    profile: { ...base, consent: { income: true, bills: true } },
+  });
+  const agent = new TaxEasyAgent({ llm: new MockLlmClient(), users, events: new InMemoryEventStore() });
+
+  assert.match((await agent.handle("u", "MY DATA")).text, /✅ income[\s\S]*❌ gst[\s\S]*✅ bills/);
+
+  const off = await agent.handle("u", "STOP SHARING income");
+  assert.match(off.text, /❌ income/);
+  const u = await users.get("u");
+  assert.equal(u?.profile.consent?.income, false);
+  assert.equal(u?.profile.grossReceipts, undefined); // category history deleted (privacy policy §2)
+
+  const on = await agent.handle("u", "share income");
+  assert.match(on.text, /TURNOVER 18 lakh/); // asks for the deleted turnover back
+  assert.match((await agent.handle("u", "TURNOVER 18 lakh")).text, /18,00,000/);
+  assert.equal((await users.get("u"))?.profile.grossReceipts, 1_800_000);
+});

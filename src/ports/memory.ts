@@ -32,6 +32,9 @@ export class InMemoryEventStore implements EventStore {
   async load(events: DomainEvent[]): Promise<void> {
     this.#events.push(...events);
   }
+  async deleteUser(userId: string): Promise<void> {
+    this.#events = this.#events.filter((e) => e.userId !== userId);
+  }
 }
 
 export class InMemoryUserStore implements UserStore {
@@ -44,6 +47,9 @@ export class InMemoryUserStore implements UserStore {
   }
   async all(): Promise<StoredUser[]> {
     return [...this.#users.values()];
+  }
+  async delete(userId: string): Promise<void> {
+    this.#users.delete(userId);
   }
 }
 

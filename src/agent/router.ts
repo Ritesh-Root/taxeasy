@@ -21,7 +21,10 @@ import {
   valuePivotAnswer,
   reassuranceAnswer,
   gstLiabilityAnswer,
+  regimeComparisonAnswer,
+  gstOnSalesAnswer,
 } from "./advisory.ts";
+import { parseAmount } from "./onboarding.ts";
 import { t } from "./i18n.ts";
 import type { Lang } from "./i18n.ts";
 import { logEvent } from "../observability/log.ts";
@@ -83,6 +86,15 @@ const PRESUMPTIVE_RX = /(presumptive.*(eligib|use|apply|qualif|scheme|allow|at m
 const VALUE_RX = /(why|kyu|kyun|क्यों).*(pay|du|charge|paisa|paise|200)|worth it|fayda|faayda|kya fayda|benefit kya|paying ₹?200|200 (rupay|rupaye|kyu|why)/i;
 const NOTICE_RX = /\b(notice|penalty|fine|scrutiny|jurmana)\b|नोटिस|जुर्माना|nahi (liya|bhara|kiya)|नहीं (लिया|भरा|किया)/i;
 const REASSURE_RX = /(samajh nahi|समझ नहीं|nahi aata|नहीं आता|confus|overwhelm|complicat|mushkil|मुश्किल|sambhal|सँभाल|संभाल|aap hi|आप ही|too much)/i;
+// Old vs new regime comparison ("old vs new", "which regime", "पुरानी या नई").
+const REGIME_RX = /\b(old|purana|purani)\b[\s\S]{0,40}\b(new|naya|nayi|naye)\b|\b(new|naya|nayi|naye)\b[\s\S]{0,40}\b(old|purana|purani)\b|पुरान[\s\S]{0,40}(नई|नया|नए)|(नई|नया|नए)[\s\S]{0,40}पुरान|which regime|kaun ?sa regime|regime compar/i;
+const AMOUNT = String.raw`₹?\s*[\d.,]+\s*(?:lakh|lac|crore|cr|लाख|करोड़)?`;
+const DEDUCTION_RX = new RegExp(String.raw`(${AMOUNT})\s*(?:of\s+)?(?:deductions?|80c|80d)|(?:deductions?|80c|80d)\s*(?:of|=|:)?\s*(${AMOUNT})`, "i");
+// GST on a stated sales figure ("sale ₹4.2 लाख, GST कितना?").
+const SALES_RX = /\b(sales?|bikri)\b|बिक्री|सेल/i;
+const GST_WORD_RX = /\bgst\b|जीएसटी/i;
+const HOW_MUCH_RX = /how much|\bkitna\b|कितना|payable|देना|\bdena\b/i; // so "do I need GST if sales are 25L" stays a registration question
+const RATE_RX = /(\d{1,2}(?:\.\d+)?)\s*%/;
 
 export async function route(
   message: string,
@@ -104,6 +116,22 @@ export async function route(
 
   // 0) Engine-backed advisory (multilingual) — answer precisely from the profile
   //    instead of punting to generic AI (persona-sim finding).
+  if (GST_WORD_RX.test(text) && SALES_RX.test(text) && HOW_MUCH_RX.test(text)) {
+    const sales = parseAmount(text.replace(new RegExp(RATE_RX, "g"), ""));
+    if (sales) {
+      const rate = Number(text.match(RATE_RX)?.[1] ?? 18);
+      logEvent("engine_call", { userId: profile.userId, intent: "gst_on_sales" });
+      return { text: `${gstOnSalesAnswer(sales, rate, lang)}\n\n${disclaimer(lang)}`, source: "engine", lang };
+    }
+  }
+  if (REGIME_RX.test(text)) {
+    const m = text.match(DEDUCTION_RX);
+    const ans = regimeComparisonAnswer(profile, m ? (parseAmount(m[1] ?? m[2]!) ?? 0) : 0, lang);
+    if (ans) {
+      logEvent("engine_call", { userId: profile.userId, intent: "regime_compare" });
+      return { text: `${ans}\n\n${disclaimer(lang)}`, source: "engine", lang };
+    }
+  }
   if (GST_LIABILITY_RX.test(text)) {
     logEvent("engine_call", { userId: profile.userId, intent: "gst_liability" });
     return { text: `${gstLiabilityAnswer(lang)}\n\n${disclaimer(lang)}`, source: "engine", lang };

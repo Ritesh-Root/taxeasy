@@ -81,3 +81,39 @@ test("per-user models are independent (one codebase, many customers)", async () 
   assert.equal((await users.get("doctor"))?.model.verbosity, "detailed");
   assert.equal((await users.get("gig"))?.model.verbosity, "brief");
 });
+
+const onboarded = (updatedAt: string) => ({
+  userId: "u", updatedAt, model: defaultModel(),
+  onboarding: { step: "done" as const, complete: true },
+  profile: { profession: "freelance developer", grossReceipts: 1_800_000, incomeType: "PROFESSION" as const },
+});
+
+test("AI notice opens a new session (first message after 24h), not every message", async () => {
+  const users = new InMemoryUserStore();
+  const now = () => new Date("2026-10-02T01:00:00.000Z");
+  const agent = new TaxEasyAgent({ llm: new MockLlmClient(), users, events: new InMemoryEventStore(), now });
+
+  await users.put(onboarded("2026-10-01T00:00:00.000Z")); // 25h ago
+  assert.match((await agent.handle("u", "when is GSTR-3B due?")).text, /^🤖 .*not a person/);
+
+  await users.put(onboarded("2026-10-02T00:00:00.000Z")); // 1h ago
+  assert.doesNotMatch((await agent.handle("u", "when is GSTR-3B due?")).text, /not a person/);
+});
+
+test("DELETE MY DATA erases the profile and the event log for that user only", async () => {
+  const users = new InMemoryUserStore();
+  const events = new InMemoryEventStore();
+  const agent = new TaxEasyAgent({ llm: new MockLlmClient(), users, events });
+  await agent.handle("u", "hi");
+  await agent.handle("other", "hi");
+
+  const r = await agent.handle("u", "DELETE MY DATA");
+  assert.match(r.text, /deleted your TaxEasy profile/);
+  assert.equal(await users.get("u"), null);
+  assert.deepEqual(await events.byUser("u"), []);
+  assert.ok(await users.get("other"));
+
+  const hi = await agent.handle("other", "मेरा डेटा डिलीट करो");
+  assert.match(hi.text, /[ऀ-ॿ]/); // confirmed in Hindi
+  assert.equal(await users.get("other"), null);
+});
