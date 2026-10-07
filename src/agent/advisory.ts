@@ -145,33 +145,41 @@ export function gstOnSalesAnswer(sales: number, ratePct: number, lang: Lang = "e
 }
 
 /**
- * Date-driven proactive nudges — the CA reminding before deadlines. Pure: given
- * a date, emit nudges for deadlines within the next 7 days. Wired to a scheduler
- * in Phase D; usable opportunistically now.
+ * Deadline reminders due within the next 7 days — sent by runtime/reminders.ts.
+ * Pure: given a date, returns each reminder with a key (kind + due date) so the
+ * scheduler sends it once. Only deadlines that apply to this user are included.
  */
-export function proactiveTriggers(p: UserProfileData, date: Date, lang: Lang = "en"): string[] {
-  const out: string[] = [];
-  const within7 = (m: number, d: number) => {
+export function proactiveTriggers(p: UserProfileData, date: Date, lang: Lang = "en"): { key: string; text: string }[] {
+  const out: { key: string; text: string }[] = [];
+  const add = (kind: string, m: number, d: number) => {
     const due = new Date(date.getFullYear(), m - 1, d);
     const days = Math.round((due.getTime() - date.getTime()) / 86_400_000);
-    return days >= 0 && days <= 7;
+    if (days < 0 || days > 7) return;
+    const label = `${d} ${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][m - 1]}`;
+    out.push({ key: `${kind}:${date.getFullYear()}-${m}-${d}`, text: t(`trigger.${kind}`, lang, { date: label }) });
   };
-  const fmt = (m: number, d: number) =>
-    `${d} ${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][m - 1]}`;
 
-  // Advance tax instalments (presumptive owners pay by 15 Mar, but warn near each).
-  for (const [m, d] of [[6, 15], [9, 15], [12, 15], [3, 15]] as const) {
-    if (within7(m, d)) out.push(t("trigger.advance_tax", lang, { date: fmt(m, d) }));
+  // Advance tax only when it's due: books → 4 instalments; presumptive → 100% by 15 Mar, if tax ≥ ₹10,000.
+  if (p.profession && p.grossReceipts != null) {
+    const est = estimateTax({
+      profession: p.profession,
+      grossReceipts: p.grossReceipts,
+      incomeType: p.incomeType ?? "PROFESSION",
+      ...(p.mostlyDigital != null ? { mostlyDigital: p.mostlyDigital } : {}),
+    });
+    const dates = !est.presumptiveApplicable
+      ? [[6, 15], [9, 15], [12, 15], [3, 15]]
+      : est.tax && advanceTaxDue(est.tax.total, true).required ? [[3, 15]] : [];
+    for (const [m, d] of dates) add("advance_tax", m!, d!);
   }
-  // GSTR-3B 20th — only if GST-registered/required.
+  // GST returns (and LUT renewal) — registered users; if unknown, turnover above the threshold.
   const goods = p.incomeType === "BUSINESS";
-  if (p.grossReceipts != null && p.grossReceipts > (goods ? 4_000_000 : 2_000_000) && within7(date.getMonth() + 1, 20)) {
-    out.push(t("trigger.gstr3b", lang, { date: fmt(date.getMonth() + 1, 20) }));
+  if (p.gstRegistered ?? (p.grossReceipts != null && p.grossReceipts > (goods ? 4_000_000 : 2_000_000))) {
+    add("gstr1", date.getMonth() + 1, 11);
+    add("gstr3b", date.getMonth() + 1, 20);
+    add("lut", 3, 31);
   }
   // ITR-3/4 (business/presumptive) 31 Aug.
-  if (within7(8, 31)) out.push(t("trigger.itr", lang, { date: fmt(8, 31) }));
-  // LUT renewal before 1 Apr.
-  if (within7(3, 31)) out.push(t("trigger.lut", lang, { date: fmt(3, 31) }));
-
+  add("itr", 8, 31);
   return out;
 }

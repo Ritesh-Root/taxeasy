@@ -17,6 +17,7 @@
  */
 import { TaxEasyAgent } from "../agent/agent.ts";
 import { serve } from "../runtime/serve.ts";
+import { startReminders } from "../runtime/reminders.ts";
 import { OpenWaChannel } from "../channels/openwa.ts";
 import { GeminiClient } from "../ai/gemini.ts";
 import { MockLlmClient } from "../ai/mock.ts";
@@ -35,7 +36,8 @@ const llm: LlmClient = geminiKey ? new GeminiClient({ apiKey: geminiKey }) : new
 // Durable file store (survives restarts). Swap to a Firestore adapter — same
 // ports — when GCP creds land; the events.jsonl file is your portable log.
 const dataDir = process.env["DATA_DIR"] ?? "./.data";
-const agent = new TaxEasyAgent({ llm, users: new FileUserStore(dataDir), events: new FileEventStore(dataDir) });
+const users = new FileUserStore(dataDir);
+const agent = new TaxEasyAgent({ llm, users, events: new FileEventStore(dataDir) });
 
 const channel = new OpenWaChannel({
   apiKey,
@@ -48,4 +50,5 @@ const channel = new OpenWaChannel({
 });
 
 console.log(`TaxEasy WhatsApp (OpenWA) — AI: ${llm.provider}. Listening for webhooks…`);
+startReminders(users, [channel]);
 await serve(channel, agent);

@@ -56,6 +56,8 @@ export interface StoredUser {
   profile: UserProfileData;
   model: UserModelData;
   onboarding?: OnboardingState;
+  /** Deadline reminders: opted out, and keys already sent (kind:due-date). */
+  reminders?: { off?: boolean; sent?: string[] };
   updatedAt: string;
 }
 

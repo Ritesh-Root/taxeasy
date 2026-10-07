@@ -218,6 +218,26 @@ const CATALOG: Catalog = {
   },
   // ---- proactive date-driven triggers ----
   "trigger.advance_tax": { en: "🗓️ Advance tax instalment is due {date} — I'll help you pay on time to avoid §234 interest.", hi: "🗓️ एडवांस टैक्स की क़िस्त {date} को देय है — §234 ब्याज से बचने के लिए मैं समय पर भरवा दूँगा।", hinglish: "🗓️ Advance tax instalment {date} ko due hai — §234 interest se bachne ke liye time par bharwa dunga." },
+  "trigger.gstr1": {
+    en: "🗓️ GSTR-1 (your sales return) is due {date}. Send me any sales bills I don't have yet.",
+    hi: "🗓️ GSTR-1 (बिक्री रिटर्न) {date} को देय है। जो बिक्री बिल मेरे पास नहीं हैं, भेज दें।",
+    hinglish: "🗓️ GSTR-1 (sales return) {date} ko due hai. Jo sales bills mere paas nahi hain, bhej do.",
+  },
+  "reminders.footer": {
+    en: "Reply STOP REMINDERS to turn these off.",
+    hi: "ये रिमाइंडर बंद करने के लिए भेजें: STOP REMINDERS",
+    hinglish: "Ye reminders band karne ke liye bhejo: STOP REMINDERS",
+  },
+  "reminders.off": {
+    en: "🔕 Done — no more deadline reminders. Send START REMINDERS to turn them back on.",
+    hi: "🔕 हो गया — अब डेडलाइन रिमाइंडर नहीं आएँगे। दोबारा चालू करने के लिए भेजें: START REMINDERS",
+    hinglish: "🔕 Ho gaya — ab deadline reminders nahi aayenge. Wapas chalu karne ke liye bhejo: START REMINDERS",
+  },
+  "reminders.on": {
+    en: "🔔 Deadline reminders are on. I'll message you up to a week before your GST, advance-tax and ITR due dates.",
+    hi: "🔔 डेडलाइन रिमाइंडर चालू हैं। GST, एडवांस टैक्स और ITR की तारीख़ से एक हफ़्ते पहले तक मैं मैसेज करूँगा।",
+    hinglish: "🔔 Deadline reminders chalu hain. GST, advance tax aur ITR ki due date se ek hafte pehle tak main message karunga.",
+  },
   "trigger.gstr3b": { en: "🗓️ GSTR-3B is due {date}. Want me to prep the summary?", hi: "🗓️ GSTR-3B {date} को देय है। समरी तैयार कर दूँ?", hinglish: "🗓️ GSTR-3B {date} ko due hai. Summary bana dun?" },
   "trigger.itr": { en: "🗓️ Your ITR (business/presumptive) is due {date}. I'll get your numbers ready.", hi: "🗓️ आपका ITR (व्यापार/प्रिज़म्प्टिव) {date} को देय है। मैं आपके आँकड़े तैयार कर दूँगा।", hinglish: "🗓️ Aapka ITR (business/presumptive) {date} ko due hai. Main numbers ready kar dunga." },
   "trigger.lut": { en: "🗓️ Renew your LUT before {date}, or exports attract 18% IGST.", hi: "🗓️ {date} से पहले अपना LUT रिन्यू करें, वरना निर्यात पर 18% IGST लगेगा।", hinglish: "🗓️ {date} se pehle apna LUT renew karo, warna export par 18% IGST lagega." },

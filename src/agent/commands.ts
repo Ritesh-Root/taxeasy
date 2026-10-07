@@ -15,6 +15,8 @@ export interface CommandResult {
 }
 
 const TURNOVER_RX = /^(turnover|टर्नओवर)\s+(.+)$/i;
+const REMINDERS_OFF_RX = /^(stop reminders?|reminders? band karo|रिमाइंडर बंद करो)$/i;
+const REMINDERS_ON_RX = /^(start reminders?|reminders? chalu karo|रिमाइंडर चालू करो)$/i;
 
 export async function runCommand(user: StoredUser, message: string, lang: Lang): Promise<CommandResult | null> {
   const text = message.trim();
@@ -38,6 +40,11 @@ export async function runCommand(user: StoredUser, message: string, lang: Lang):
       text: t("profile.turnover_set", lang, { amount: amount.toLocaleString("en-IN") }),
       user: { ...user, profile: { ...user.profile, grossReceipts: amount } },
     };
+  }
+
+  if (REMINDERS_OFF_RX.test(text) || REMINDERS_ON_RX.test(text)) {
+    const off = REMINDERS_OFF_RX.test(text);
+    return { text: t(off ? "reminders.off" : "reminders.on", lang), user: { ...user, reminders: { ...user.reminders, off } } };
   }
 
   return null;

@@ -10,6 +10,7 @@
  */
 import { TaxEasyAgent } from "../agent/agent.ts";
 import { serveAll } from "../runtime/serve-all.ts";
+import { startReminders } from "../runtime/reminders.ts";
 import { TelegramChannel } from "../channels/telegram.ts";
 import { OpenWaChannel } from "../channels/openwa.ts";
 import { GeminiClient } from "../ai/gemini.ts";
@@ -22,7 +23,8 @@ const geminiKey = process.env["GEMINI_API_KEY"];
 const llm: LlmClient = geminiKey ? new GeminiClient({ apiKey: geminiKey }) : new MockLlmClient();
 
 const dataDir = process.env["DATA_DIR"] ?? "./.data";
-const agent = new TaxEasyAgent({ llm, users: new FileUserStore(dataDir), events: new FileEventStore(dataDir) });
+const users = new FileUserStore(dataDir);
+const agent = new TaxEasyAgent({ llm, users, events: new FileEventStore(dataDir) });
 
 const channels: Channel[] = [];
 
@@ -47,4 +49,5 @@ if (channels.length === 0) {
 }
 
 console.log(`TaxEasy multi-channel — AI: ${llm.provider} · channels: ${channels.map((c) => c.name).join(", ")}`);
+startReminders(users, channels);
 await serveAll(channels, agent);
