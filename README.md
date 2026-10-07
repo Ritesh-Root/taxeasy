@@ -5,6 +5,9 @@ tax, GST & bills help, in Hindi, Hinglish, or English.**
 
 Built for the **Build with Gemini XPRIZE** · category **Small Business Services**.
 
+> **Status (October 2026):** this repository is the June 2026 prototype. TaxEasy is being rebuilt on
+> Anthropic's Claude — see [taxeasy.dev](https://taxeasy.dev).
+
 > **AI explains; a hard-coded engine calculates.** Every ₹ figure comes from a deterministic
 > FY2025-26 tax engine — the AI never produces a tax number, so a hallucinated figure is
 > structurally impossible. That's the trust moat of a tax product.
@@ -43,7 +46,7 @@ WhatsApp / Telegram ─▶ Channel port ─▶ runtime ─▶ TaxEasyAgent
 ## Run it
 Node 24+ (native TypeScript — no build step, zero dependencies).
 ```bash
-node --test 'src/**/*.test.ts'     # 45 tests
+node --test 'src/**/*.test.ts'     # 68 tests
 node src/bot/demo.ts               # scripted onboarding + Q&A (mock AI)
 node src/bot/cli.ts                # chat in your terminal (set GEMINI_API_KEY for real AI)
 GEMINI_API_KEY=xxx node src/sim/persona-sim.ts --llm   # Gemini Flash role-plays Indian clients
