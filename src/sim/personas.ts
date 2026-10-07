@@ -15,7 +15,7 @@ export interface Persona {
   lang: Lang;
   /** What a good "agentic CA" should proactively help them with. */
   goals: string[];
-  /** Scripted turns (first ~5 answer onboarding, rest are their real concerns). */
+  /** Scripted turns (first 6 answer onboarding: greeting, country, 4 questions; rest are their real concerns). */
   script: string[];
 }
 
@@ -27,7 +27,7 @@ export const PERSONAS: Persona[] = [
     lang: "hi",
     goals: ["does she need GST registration", "fear of a tax notice", "keep it simple"],
     script: [
-      "नमस्ते", "किराना दुकान", "60 लाख", "कैश", "income",
+      "नमस्ते", "भारत", "किराना दुकान", "बिहार, रजिस्टर्ड नहीं", "60 लाख कैश", "income",
       "मुझे जीएसटी लेना पड़ेगा क्या?",
       "अगर नहीं लिया तो नोटिस आएगा?",
       "ये सब मुझे समझ नहीं आता, आप ही सँभाल लो",
@@ -40,7 +40,7 @@ export const PERSONAS: Persona[] = [
     lang: "hinglish",
     goals: ["foreign income tax", "LUT for exports", "advance tax", "is ₹0 tax really correct"],
     script: [
-      "hii bhai", "freelance software developer", "18 lakh", "digital", "all",
+      "hii bhai", "India", "freelance software developer", "Karnataka, not registered", "18 lakh", "all",
       "mera client US me hai, foreign income pe tax kaise lagega?",
       "LUT kya hota hai, mujhe lena chahiye?",
       "advance tax kab bharu?",
@@ -53,7 +53,7 @@ export const PERSONAS: Persona[] = [
     lang: "en",
     goals: ["depreciation on equipment", "how to legally save tax", "advance tax schedule"],
     script: [
-      "hello", "doctor private practice", "40 lakh", "digital", "all",
+      "hello", "India", "doctor private practice", "Maharashtra, not registered", "40 lakh", "all",
       "I bought an ultrasound machine for 8 lakh this year, can I claim it?",
       "how can I reduce my tax legally?",
       "remind me about my advance tax please",
@@ -66,7 +66,7 @@ export const PERSONAS: Persona[] = [
     lang: "hinglish",
     goals: ["do I even owe tax", "is paying ₹200 worth it for me", "simple reassurance"],
     script: [
-      "hii", "rapido bike taxi captain", "4.5 lakh", "digital", "income",
+      "hii", "India", "rapido bike taxi captain", "UP, nahi", "4.5 lakh", "income",
       "mujhe tax dena hai ya nahi?",
       "to fir mai aapko 200 rupay kyu du har mahine?",
       "koi sarkari paisa milta hai kya humein?",
@@ -79,7 +79,7 @@ export const PERSONAS: Persona[] = [
     lang: "en",
     goals: ["invoice brands + chase payment", "GST on her services", "spotting a duplicate bill"],
     script: [
-      "hey", "instagram content creator", "25 lakh", "digital", "all",
+      "hey", "India", "instagram content creator", "Delhi, registered", "25 lakh", "all",
       "I need to send an invoice to Mamaearth for a brand deal, can you help?",
       "do I need to charge GST to them?",
       "I think I logged the same 60000 bill twice, can you check?",
@@ -92,7 +92,7 @@ export const PERSONAS: Persona[] = [
     lang: "en",
     goals: ["ITC input-output netting", "multi-GSTIN", "is he above presumptive limit"],
     script: [
-      "hello", "garments wholesale trader", "1.2 cr", "digital", "all",
+      "hello", "India", "garments wholesale trader", "27ABCDE1234F1Z5", "1.2 cr", "all",
       "how much GST do I actually pay after input credit?",
       "I have shops in two states, can you handle both GSTINs?",
       "can I use the presumptive scheme at my turnover?",

@@ -2,8 +2,9 @@
  * Conversational onboarding — turns a fresh WhatsApp contact into a usable
  * profile in four short steps, then delivers their first tax estimate.
  *
- *   welcome → profession (detect scheme+segment) → turnover → payment mode
- *           → DPDP consent toggles → done (first estimate)
+ *   welcome → profession (detect scheme+segment) → state + GST status
+ *           → turnover (+ cash) → what to help with = DPDP consent → done (first estimate)
+ *   ("mode" is kept only for users who were mid-onboarding before it was merged into turnover.)
  *
  * Pure functions: given the current step + message + profile-so-far, return the
  * reply, the profile patch, and the next step. The agent owns persistence.
@@ -13,6 +14,7 @@ import { detectScheme, estimateTax } from "../engine/index.ts";
 import { proactiveInsights } from "./advisory.ts";
 import { sanitizeText } from "./sanitize.ts";
 import { matchRegion } from "../regions/registry.ts";
+import { GSTIN_RX, matchState, stateByCode } from "../regions/in-states.ts";
 import { t } from "./i18n.ts";
 import type { Lang } from "./i18n.ts";
 
@@ -41,6 +43,15 @@ export function parseAmount(text: string): number | null {
   if (/cr|crore|करोड़|करोड/.test(t)) return Math.round(num * 10_000_000);
   if (/lakh|lac|लाख|\bl\b/.test(t)) return Math.round(num * 100_000);
   return Math.round(num);
+}
+
+/** GSTIN (implies registered + state) or a yes/no in the user's words. */
+function parseGstStatus(msg: string): Pick<UserProfileData, "gstin" | "gstRegistered"> {
+  const g = msg.match(GSTIN_RX);
+  if (g) return { gstin: g[0].toUpperCase(), gstRegistered: true };
+  if (/not registered|unregistered|no gst|\bnahi\b|नहीं|\bno\b/i.test(msg)) return { gstRegistered: false };
+  if (/registered|\bhaan\b|हाँ|\byes\b/i.test(msg)) return { gstRegistered: true };
+  return {};
 }
 
 const CONSENT_KEYS = ["income", "gst", "bank", "bills", "notices"] as const;
@@ -101,6 +112,21 @@ export function handleOnboarding(
         reply: t("onboard.profession_ack", lang, { work: profession, scheme }),
         profilePatch: { profession, incomeType },
         segment,
+        nextStep: "state",
+        complete: false,
+      };
+    }
+
+    case "state": {
+      const gst = parseGstStatus(msg);
+      const state = gst.gstin ? stateByCode(gst.gstin.slice(0, 2)) : matchState(msg);
+      if (!state) {
+        return { reply: t("onboard.state_reask", lang), profilePatch: {}, nextStep: "state", complete: false };
+      }
+      const gstKey = gst.gstRegistered === undefined ? "onboard.gst_unknown" : gst.gstRegistered ? "onboard.gst_yes" : "onboard.gst_no";
+      return {
+        reply: t("onboard.state_ack", lang, { state: lang === "hi" ? state.hi : state.name, gst: t(gstKey, lang) }),
+        profilePatch: { state: state.code, ...gst },
         nextStep: "turnover",
         complete: false,
       };
@@ -113,8 +139,8 @@ export function handleOnboarding(
       }
       return {
         reply: t("onboard.turnover_ack", lang, { amount: amount.toLocaleString("en-IN") }),
-        profilePatch: { grossReceipts: amount },
-        nextStep: "mode",
+        profilePatch: { grossReceipts: amount, mostlyDigital: !/\bcash\b|कैश|नकद/i.test(msg) },
+        nextStep: "consent",
         complete: false,
       };
     }

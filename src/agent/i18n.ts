@@ -37,14 +37,27 @@ const CATALOG: Catalog = {
     hinglish: "👋 TaxEasy me aapka swagat hai — FY2025-26 ke liye aapka tax aur bills helper.\n4 chhote sawaalon me set kar deta hoon.\n\n1/4 — Aap kya kaam/business karte ho? (jaise \"freelance developer\", \"kirana store\", \"doctor\")",
   },
   "onboard.profession_ack": {
-    en: "Got it — {work} (likely {scheme} presumptive scheme).\n\n2/4 — Roughly, your yearly income / turnover? (e.g. \"18,00,000\" or \"18 lakh\")",
-    hi: "ठीक है — {work} ({scheme} प्रिज़म्प्टिव स्कीम के अंतर्गत)।\n\n2/4 — मोटे तौर पर, आपकी सालाना आमदनी / टर्नओवर कितना है? (जैसे \"18,00,000\" या \"18 लाख\")",
-    hinglish: "Theek hai — {work} (lagta hai {scheme} presumptive scheme).\n\n2/4 — Mota-mota, aapka saalana income / turnover kitna hai? (jaise \"18,00,000\" ya \"18 lakh\")",
+    en: "Got it — {work} (likely {scheme} presumptive scheme).\n\n2/4 — Which state is your business in, and are you GST-registered? Send your GSTIN, or e.g. \"Odisha, not registered\".",
+    hi: "ठीक है — {work} ({scheme} प्रिज़म्प्टिव स्कीम के अंतर्गत)।\n\n2/4 — आपका व्यापार किस राज्य में है, और क्या आप GST में रजिस्टर्ड हैं? अपना GSTIN भेजें, या जैसे \"ओडिशा, रजिस्टर्ड नहीं\"।",
+    hinglish: "Theek hai — {work} (lagta hai {scheme} presumptive scheme).\n\n2/4 — Aapka business kis state me hai, aur kya aap GST registered ho? Apna GSTIN bhejo, ya jaise \"Odisha, not registered\".",
   },
+  "onboard.state_ack": {
+    en: "Noted — {state}, {gst}.\n\n3/4 — Roughly, your yearly turnover? Add \"cash\" if most payments come in cash (e.g. \"18 lakh\" or \"18 lakh cash\").",
+    hi: "नोट किया — {state}, {gst}।\n\n3/4 — मोटे तौर पर, आपका सालाना टर्नओवर कितना है? ज़्यादातर पेमेंट कैश में आती है तो \"कैश\" भी लिखें (जैसे \"18 लाख\" या \"18 लाख कैश\")।",
+    hinglish: "Note kiya — {state}, {gst}.\n\n3/4 — Mota-mota, aapka saalana turnover kitna hai? Zyada payment cash me aati hai to \"cash\" bhi likho (jaise \"18 lakh\" ya \"18 lakh cash\").",
+  },
+  "onboard.state_reask": {
+    en: "Which state is your business in? (e.g. \"Odisha\") — or send your 15-character GSTIN.",
+    hi: "आपका व्यापार किस राज्य में है? (जैसे \"ओडिशा\") — या अपना 15 अक्षरों का GSTIN भेजें।",
+    hinglish: "Aapka business kis state me hai? (jaise \"Odisha\") — ya apna 15-character GSTIN bhejo.",
+  },
+  "onboard.gst_yes": { en: "GST-registered", hi: "GST में रजिस्टर्ड", hinglish: "GST registered" },
+  "onboard.gst_no": { en: "not GST-registered", hi: "GST में रजिस्टर्ड नहीं", hinglish: "GST registered nahi" },
+  "onboard.gst_unknown": { en: "GST status not given", hi: "GST स्थिति नहीं बताई", hinglish: "GST status nahi bataya" },
   "onboard.turnover_ack": {
-    en: "Noted ₹{amount}/year.\n\n3/4 — Do you receive most payments digitally (UPI / bank) or in cash?",
-    hi: "नोट किया ₹{amount}/साल।\n\n3/4 — आपको ज़्यादातर पेमेंट डिजिटल (UPI / बैंक) में मिलती है या कैश में?",
-    hinglish: "Note kiya ₹{amount}/saal.\n\n3/4 — Aapko zyada payment digital (UPI / bank) me milti hai ya cash me?",
+    en: "Noted ₹{amount}/year.\n\n4/4 — What do you want help with? Reply with any of: income (tax), gst, bills, bank, notices — or \"all\". I'll only use data for what you pick; change it anytime with \"MY DATA\".",
+    hi: "नोट किया ₹{amount}/साल।\n\n4/4 — आपको किसमें मदद चाहिए? इनमें से कोई भी भेजें: income (टैक्स), gst, bills, bank, notices — या \"all\"। मैं सिर्फ़ उसी का डेटा इस्तेमाल करूँगा जो आप चुनेंगे; \"MY DATA\" भेजकर कभी भी बदलें।",
+    hinglish: "Note kiya ₹{amount}/saal.\n\n4/4 — Aapko kis cheez me madad chahiye? Inme se koi bhi bhejo: income (tax), gst, bills, bank, notices — ya \"all\". Main sirf usi ka data use karunga jo aap chunoge; \"MY DATA\" bhejke kabhi bhi badlo.",
   },
   "onboard.turnover_reask": {
     en: "Please send your yearly amount as a number, e.g. \"1800000\" or \"18 lakh\".",

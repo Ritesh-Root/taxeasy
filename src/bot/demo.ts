@@ -23,11 +23,12 @@ const agent = new TaxEasyAgent({ llm, users: new InMemoryUserStore(), events: ne
 const u = "demo-user";
 
 const script = [
-  "hi",                              // → welcome
-  "freelance software developer",    // → onboarding: profession
-  "18 lakh",                         // → onboarding: turnover
-  "digital",                         // → onboarding: mode
-  "income, bills",                   // → onboarding: consent → first estimate
+  "hi",                              // → welcome: which country?
+  "India",                           // → onboarding starts
+  "freelance software developer",    // → 1/4 business type
+  "Odisha, not registered",          // → 2/4 state + GST status
+  "18 lakh",                         // → 3/4 turnover
+  "income, bills",                   // → 4/4 what to help with (consent) → first estimate
   "when is GSTR-3B due?",            // → static (no AI)
   "how much tax do I owe?",          // → engine (no AI)
   "explain presumptive tax simply",  // → AI

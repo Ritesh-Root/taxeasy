@@ -51,7 +51,7 @@ export function parseConsentCommand(text: string): ConsentCommand | null {
 }
 
 /** Stored fields per category. Withdrawing consent deletes them (privacy policy §2). */
-const STORED: Partial<Record<Category, (keyof UserProfileData)[]>> = { income: ["grossReceipts"] };
+const STORED: Partial<Record<Category, (keyof UserProfileData)[]>> = { income: ["grossReceipts"], gst: ["gstin"] };
 
 export function applyConsentChange(
   p: UserProfileData,

@@ -44,7 +44,7 @@ export interface DocStore {
   get(key: string): Promise<{ bytes: Uint8Array; contentType: string } | null>;
 }
 
-export type OnboardingStep = "region" | "profession" | "turnover" | "mode" | "consent" | "done";
+export type OnboardingStep = "region" | "profession" | "state" | "turnover" | "mode" | "consent" | "done";
 export interface OnboardingState {
   step: OnboardingStep;
   complete: boolean;
@@ -63,6 +63,10 @@ export interface UserProfileData {
   /** ISO region code the user selected at onboarding (drives engine/currency/language). */
   region?: string;
   profession?: string;
+  /** GST state code, e.g. "21" = Odisha (see regions/in-states.ts). */
+  state?: string;
+  gstin?: string;
+  gstRegistered?: boolean;
   grossReceipts?: number;
   incomeType?: "SALARY" | "PROFESSION" | "BUSINESS" | "OTHER";
   mostlyDigital?: boolean;
